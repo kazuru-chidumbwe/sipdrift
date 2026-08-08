@@ -4,13 +4,15 @@ A testing framework for open-source SIP/VoIP stacks.
 
 ## Status
 
-**Early scaffold (`0.0.1`).** Not ready for use.
+**Early scaffold (`0.0.2`).** Not ready for use.
 
-Weekend-2 layout (2026-08-08):
+Weekend-2 (2026-08-08):
 
 - installable package stub (`sipdrift`)
-- CLI: `sipdrift status` / `--version`
-- start-line stub only (`sipdrift.parse.split_start_line`)
+- CLI: `sipdrift status` · `sipdrift fixtures` · `--version`
+- start-line stub (`sipdrift.parse`)
+- fixture corpus stub (`fixtures/` · `F-INVITE-MIN` · `F-200-MIN`)
+- compare-harness outline (`sipdrift.harness.classify_start_lines`) — **no stack drivers yet**
 - smoke tests under `tests/`
 
 See [`docs/WEEKEND-LOG.md`](docs/WEEKEND-LOG.md) for the JOSS age-clock cadence.
@@ -20,6 +22,7 @@ See [`docs/WEEKEND-LOG.md`](docs/WEEKEND-LOG.md) for the JOSS age-clock cadence.
 ```bash
 python -m pip install -e ".[dev]"
 sipdrift --version
+sipdrift fixtures
 pytest
 ```
 
