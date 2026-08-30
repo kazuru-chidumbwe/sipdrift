@@ -5,13 +5,16 @@ from __future__ import annotations
 from sipdrift.drivers.builtin import BuiltinDriver
 from sipdrift.drivers.pjsip_stub import PjsipStubDriver
 from sipdrift.drivers.protocol import StackDriver
+from sipdrift.drivers.sofia_stub import SofiaStubDriver
 
 _BUILTIN = BuiltinDriver()
 _PJSIP_STUB = PjsipStubDriver()
+_SOFIA_STUB = SofiaStubDriver()
 
 DRIVERS: dict[str, StackDriver] = {
     _BUILTIN.stack_id: _BUILTIN,
     _PJSIP_STUB.stack_id: _PJSIP_STUB,
+    _SOFIA_STUB.stack_id: _SOFIA_STUB,
 }
 
 

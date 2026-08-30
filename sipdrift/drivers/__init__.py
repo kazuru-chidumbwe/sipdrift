@@ -4,11 +4,13 @@ from sipdrift.drivers.builtin import BuiltinDriver
 from sipdrift.drivers.pjsip_stub import PjsipStubDriver
 from sipdrift.drivers.protocol import StackDriver
 from sipdrift.drivers.registry import DRIVERS, get_driver, list_driver_names
+from sipdrift.drivers.sofia_stub import SofiaStubDriver
 
 __all__ = [
     "BuiltinDriver",
     "DRIVERS",
     "PjsipStubDriver",
+    "SofiaStubDriver",
     "StackDriver",
     "get_driver",
     "list_driver_names",

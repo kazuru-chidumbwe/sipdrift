@@ -6,9 +6,16 @@ import argparse
 import sys
 
 from sipdrift import __version__
-from sipdrift.drivers.registry import get_driver
+from sipdrift.drivers.registry import get_driver, list_driver_names
 from sipdrift.fixtures import list_fixtures
-from sipdrift.run import compare_exit_code, format_report, run_compare
+from sipdrift.run import (
+    compare_exit_code,
+    format_report,
+    format_suite_report,
+    run_compare,
+    run_suite,
+    suite_exit_code,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -26,22 +33,30 @@ def main(argv: list[str] | None = None) -> int:
     subparsers.add_parser("status", help="Show harness version and status.")
     subparsers.add_parser("fixtures", help="List pinned fixture corpus.")
 
+    drivers_parser = subparsers.add_parser("drivers", help="List registered stack drivers.")
+    drivers_parser.set_defaults(command="drivers")
+
     compare_parser = subparsers.add_parser(
         "compare",
         help="Compare a fixture across two stack drivers.",
     )
     compare_parser.add_argument("fixture_id", help="Stable fixture ID (e.g. F-200-MIN).")
+    compare_parser.add_argument("--left", default="builtin", help="Left driver name.")
+    compare_parser.add_argument("--right", default="pjsip-stub", help="Right driver name.")
     compare_parser.add_argument(
-        "--left",
-        default="builtin",
-        help="Left driver name (default: builtin).",
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Report format (default: text).",
     )
-    compare_parser.add_argument(
-        "--right",
-        default="pjsip-stub",
-        help="Right driver name (default: pjsip-stub).",
+
+    suite_parser = subparsers.add_parser(
+        "suite",
+        help="Compare all fixtures across two stack drivers.",
     )
-    compare_parser.add_argument(
+    suite_parser.add_argument("--left", default="builtin", help="Left driver name.")
+    suite_parser.add_argument("--right", default="pjsip-stub", help="Right driver name.")
+    suite_parser.add_argument(
         "--format",
         choices=("text", "json"),
         default="text",
@@ -65,20 +80,31 @@ def main(argv: list[str] | None = None) -> int:
             print(f"{fixture_id}\t{mark}\t{path.name}")
         return 0 if all(p.is_file() for _, p in rows) else 1
 
-    if args.command == "compare":
+    if args.command == "drivers":
+        for name in list_driver_names():
+            print(name)
+        return 0
+
+    if args.command in ("compare", "suite"):
         try:
             left = get_driver(args.left)
             right = get_driver(args.right)
         except KeyError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 2
-        try:
-            case = run_compare(args.fixture_id, left, right)
-        except (KeyError, FileNotFoundError) as exc:
-            print(f"error: {exc}", file=sys.stderr)
-            return 2
-        sys.stdout.write(format_report(case, fmt=args.format))
-        return compare_exit_code(case.status)
+
+        if args.command == "compare":
+            try:
+                case = run_compare(args.fixture_id, left, right)
+            except (KeyError, FileNotFoundError) as exc:
+                print(f"error: {exc}", file=sys.stderr)
+                return 2
+            sys.stdout.write(format_report(case, fmt=args.format))
+            return compare_exit_code(case.status)
+
+        cases = run_suite(left, right)
+        sys.stdout.write(format_suite_report(cases, fmt=args.format))
+        return suite_exit_code(cases)
 
     parser.error(f"unknown command: {args.command}")
     return 2

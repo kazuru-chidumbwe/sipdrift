@@ -5,8 +5,9 @@ import json
 from sipdrift.cli import main
 from sipdrift.drivers.builtin import BuiltinDriver
 from sipdrift.drivers.pjsip_stub import PjsipStubDriver
+from sipdrift.drivers.sofia_stub import SofiaStubDriver
 from sipdrift.harness import CompareStatus
-from sipdrift.run import case_to_dict, format_report, run_compare
+from sipdrift.run import case_to_dict, format_report, run_compare, run_suite
 
 
 def test_run_compare_agree_f200():
@@ -68,3 +69,25 @@ def test_cli_unknown_driver():
 def test_cli_unknown_fixture():
     code = main(["compare", "F-NOPE"])
     assert code == 2
+
+
+def test_run_suite_default_pair():
+    cases = run_suite(BuiltinDriver(), PjsipStubDriver())
+    assert len(cases) == 7
+    agree = [c for c in cases if c.status == CompareStatus.AGREE]
+    error = [c for c in cases if c.status == CompareStatus.ERROR]
+    assert len(agree) == 6
+    assert len(error) == 1
+    assert error[0].fixture_id == "F-MALFORMED-START"
+
+
+def test_cli_suite(capsys):
+    code = main(["suite", "--right", "sofia-stub"])
+    assert code == 1  # malformed fixture errors
+    out = capsys.readouterr().out
+    assert "suite summary:" in out
+
+
+def test_cross_oss_stubs_agree():
+    case = run_compare("F-200-MIN", PjsipStubDriver(), SofiaStubDriver())
+    assert case.status == CompareStatus.AGREE

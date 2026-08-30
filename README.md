@@ -4,64 +4,60 @@ A differential testing harness for open-source SIP/VoIP stacks.
 
 ## Status
 
-**Early development (`0.1.0`).** Compare loop works with stub drivers; not production-ready.
+**Early development (`0.2.0`).** Multi-axis oracle + OSS stub pair; lab drivers pending.
 
 Current layout:
 
 - installable package (`sipdrift`)
-- CLI: `sipdrift status` · `sipdrift fixtures` · `sipdrift compare` · `--version`
-- start-line parser (`sipdrift.parse`)
+- CLI: `status` · `fixtures` · `drivers` · `compare` · `suite` · `--version`
+- parse axes: start-line · status code · Via · CSeq
 - fixture corpus (`fixtures/` — 7 pinned cases)
-- stack drivers: `builtin` (reference) · `pjsip-stub` (PJSIP-target stub)
-- compare harness (`sipdrift.run` + `classify_start_lines`)
+- stack drivers: `builtin` · `pjsip-stub` · `sofia-stub`
+- compare harness with multi-axis oracle
 - pytest suite + GitHub Actions CI
 
 ## Quick check
 
 ```bash
 python -m pip install -e ".[dev]"
-sipdrift --version
-sipdrift fixtures
+python -m pytest -q
 sipdrift compare F-200-MIN
-pytest
+sipdrift suite --right sofia-stub
 ```
 
 ## Compare
 
 ```bash
-# Default: builtin vs pjsip-stub
 sipdrift compare F-200-MIN
-
-# JSON report
+sipdrift compare F-200-MIN --left pjsip-stub --right sofia-stub
 sipdrift compare F-200-MIN --format json
-
-# Custom driver pair
-sipdrift compare F-486-MIN --left builtin --right pjsip-stub
 ```
 
-Exit codes: `0` agree · `1` diverge/error · `2` skip/usage error.
+## Suite
+
+```bash
+sipdrift suite
+sipdrift suite --left builtin --right sofia-stub --format json
+```
+
+Exit codes: `0` agree / all agree · `1` diverge/error · `2` skip/usage error.
 
 ## Drivers
 
 | Name | Type | Notes |
 | --- | --- | --- |
-| `builtin` | Internal reference | Start-line parse only |
-| `pjsip-stub` | PJSIP-target stub | Parse-path; lab subprocess in Phase 2 |
+| `builtin` | Internal reference | Parse-path axes |
+| `pjsip-stub` | PJSIP-target (GPL-2.0) | Parse-path; lab hook in `docs/LAB-PJSIP.md` |
+| `sofia-stub` | Sofia-SIP-target (LGPL-2.1) | Parse-path stub |
 
-## Fixtures
+## Oracle axes
 
-| ID | Intent |
-| --- | --- |
-| `F-INVITE-MIN` | Minimal INVITE |
-| `F-200-MIN` | 200 OK response (smoke gate) |
-| `F-486-MIN` | 486 Busy Here |
-| `F-503-MIN` | 503 Service Unavailable |
-| `F-OPTIONS-MIN` | OPTIONS request |
-| `F-REGISTER-MIN` | REGISTER request |
-| `F-MALFORMED-START` | Empty message (ERROR path) |
+`start_line` · `status_code` · `via` · `cseq`
+
+Known results: [`docs/DIVERGENCES.md`](docs/DIVERGENCES.md)
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
 
-PJSIP (planned stack #1) is GPL-2.0 — see project docs when lab driver lands.
+PJSIP (GPL-2.0) and Sofia-SIP (LGPL-2.1) are planned lab stacks.
