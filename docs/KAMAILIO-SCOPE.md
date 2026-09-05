@@ -1,6 +1,6 @@
 # Kamailio lab driver (proxy tier)
 
-**Status (0.3.2):** `kamailio-stub` + **`kamailio-lab`** shipped.
+**Status (0.3.3):** `kamailio-stub` + **`kamailio-lab`** shipped (unchanged; body axes filled from wire when Lua omits digests).
 
 | Field | Value |
 | --- | --- |

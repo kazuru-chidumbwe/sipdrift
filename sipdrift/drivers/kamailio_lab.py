@@ -8,6 +8,7 @@ import socket
 import time
 from pathlib import Path
 
+from sipdrift.drivers.lab_json import observation_from_lab_json
 from sipdrift.harness import StackObservation
 
 _DEFAULT_OBS = Path("/tmp/sipdrift-kamailio-obs.json")
@@ -77,12 +78,6 @@ class KamailioLabDriver:
                 detail=f"no observation file from kamailio at {self._obs}",
             )
 
-        return StackObservation(
-            stack_id=self.stack_id,
-            start_line=data.get("start_line"),
-            status_code=data.get("status_code"),
-            via=data.get("via"),
-            cseq=data.get("cseq"),
-            ok=bool(data.get("ok")),
-            detail=str(data.get("detail") or "kamailio-lab"),
+        return observation_from_lab_json(
+            self.stack_id, data, raw=raw, default_detail="kamailio-lab"
         )

@@ -22,11 +22,11 @@ bibliography: paper.bib
 
 Session Initiation Protocol (SIP) stacks are the control-plane substrate for Voice over IP (VoIP), unified communications, and many telecom edge deployments [@rfc3261]. Open-source implementations — notably PJSIP [@pjsip], Sofia-SIP [@sofia], and Kamailio-class proxies [@kamailio] — are routinely combined in production platforms and research testbeds. Interoperability defects and semantic divergences between stacks are a recurring source of mis-routing, toll-fraud exposure, and security bypasses that single-stack conformance suites do not surface.
 
-**sipdrift** is an open-source differential testing harness for SIP message handling. It runs a pinned corpus of SIP fixtures through multiple stack drivers, normalizes each driver's observations onto shared oracle axes (start-line, status code, Via, CSeq), and classifies each fixture as `agree`, `diverge`, `error`, or `skip`. The harness ships a Python package with a `StackDriver` protocol, stub and lab drivers for PJSIP and Sofia-SIP, a `compare`/`suite` CLI with text and JSON reports, GitHub Actions continuous integration, and a JOSS-oriented paper pack under `paper/`.
+**sipdrift** is an open-source differential testing harness for SIP message handling. It runs a pinned corpus of SIP fixtures through multiple stack drivers, normalizes each driver's observations onto shared oracle axes (start-line, status code, Via, CSeq, Content-Type, Content-Length, body and SDP digests), and classifies each fixture as `agree`, `diverge`, `error`, or `skip`. The harness ships a Python package with a `StackDriver` protocol, stub and lab drivers for PJSIP, Sofia-SIP, and Kamailio, a `compare`/`suite` CLI with text and JSON reports, GitHub Actions continuous integration, and a JOSS-oriented paper pack under `paper/`.
 
 # Statement of need
 
-Production VoIP platforms assemble SIP proxies, media servers, session border controllers, and edge firewalls from different vendors and OSS projects. RFC 3261 conformance is necessary but not sufficient: stacks diverge on compact-form headers, folded header lines, whitespace tolerance, escaped URIs, unknown methods, and incomplete messages [@rfc3261; @rfc4475]. Those divergences matter for operators who must reason about what a peer will accept or rewrite, and for researchers studying protocol robustness and defence-in-depth at the signalling layer.
+Production VoIP platforms assemble SIP proxies, media servers, session border controllers, and edge firewalls from different vendors and OSS projects. RFC 3261 conformance is necessary but not sufficient: stacks diverge on compact-form headers, folded header lines, whitespace tolerance, escaped URIs, unknown methods, incomplete messages, and how they treat message bodies and SDP [@rfc3261; @rfc4475]. Those divergences matter for operators who must reason about what a peer will accept or rewrite, and for researchers studying protocol robustness and defence-in-depth at the signalling layer.
 
 Existing SIP tooling clusters into four useful but incomplete categories:
 
@@ -63,7 +63,7 @@ fixture (.sip) → StackDriver.observe() × N → classify_observations() → re
 
 ## Oracle axes
 
-From **0.2.0**, the default oracle compares:
+From **0.3.3**, the default oracle compares:
 
 | Axis | Meaning |
 | --- | --- |
@@ -71,8 +71,12 @@ From **0.2.0**, the default oracle compares:
 | `status_code` | Numeric response code when present |
 | `via` | First Via header value |
 | `cseq` | CSeq header value |
+| `content_type` | Content-Type / compact `c` |
+| `content_length` | Content-Length / compact `l` (integer) |
+| `body_sha256` | SHA-256 of the raw body bytes |
+| `sdp_sha256` | SHA-256 of normalized SDP when Content-Type is `application/sdp`; else null |
 
-Outcomes: `agree` · `diverge` · `error` · `skip`.
+Outcomes: `agree` · `diverge` · `error` · `skip`. Body axes fingerprint the delivered fixture body (and a stable SDP normalization); they do not yet compare stack re-serialization of media descriptions.
 
 ## Driver tiers
 
@@ -88,11 +92,12 @@ CI exercises stub and reference drivers so the package remains installable witho
 
 ## Fixture corpus
 
-Version **0.3.2** ships **40** fixtures: happy-path requests/responses, dialog methods, event packages, compact/folded/multi-Via, case and whitespace edges, incomplete messages, and an RFC 4475–inspired torture subset (LWS around colons, escaped URIs, long URI user parts, mismatched Content-Length, duplicate Via/CSeq, non-ASCII Warning text, NUL-in-body claims).
+Version **0.3.3** ships **53** fixtures: happy-path requests/responses, dialog methods, event packages, INVITE/200 with SDP bodies, compact Content-Type, plain MESSAGE bodies, compact/folded/multi-Via, case and whitespace edges, incomplete messages, and an expanded RFC 4475–inspired torture set (LWS, escaped/long URIs, mismatched and duplicate Content-Length, duplicate Via/CSeq, non-ASCII Warning, NUL-in-body, IPv6 Via, display-names, unknown URI schemes, Request-URI parameters, empty Subject, missing magic cookie).
 
 ## Threats to validity
 
 - Drivers observe **parse/normalization** of a fixture blob — not full transaction or media state machines.
+- Body/SDP digests are wire fingerprints (plus SDP whitespace normalization); stacks that rewrite SDP on the wire are out of scope until a re-serialize path exists.
 - Normalization differences are real under the chosen axes, but may be intentional stack policy.
 - Lab binaries are host-pinned; reproducers without Sofia/PJSIP/Kamailio fall back to stubs.
 - `kamailio-lab` is a **proxy receive** path (UDP + script dump), not a production routing configuration [@kamailio].
@@ -113,38 +118,39 @@ sipdrift asks: *do these stacks agree on these axes under this input?*
 
 ## Lab setup
 
-Ephemeral Host B (`10.4.0.32`, Ubuntu 24.04, 16 vCPU). Sofia-SIP `1.12.11` and Kamailio `5.7.4` from distro packages; PJSIP built from upstream pjproject. Packs under `/opt/atlas/sipdrift-packs/`. Canonical Results pack: **`sipdrift-hostb-20260905T012956Z`** (`0.3.2`, 40 fixtures, seven drivers including `kamailio-lab`).
+Ephemeral Ubuntu 24.04 lab host (16 vCPU). Sofia-SIP `1.12.11` and Kamailio `5.7.4` from distro packages; PJSIP built from upstream pjproject. Packs under a host-local `/opt/atlas/sipdrift-packs/` tree. Canonical Results pack: **`sipdrift-hostb-20260905T015940Z`** (`0.3.3`, 53 fixtures, seven drivers including `kamailio-lab`).
 
 ## Experiment classes
 
-1. Full-corpus **driver-pair suites** (all ordered pairs among seven drivers — **92** indexed experiments in the 0.3.2 pack).
+1. Full-corpus **driver-pair suites** (all ordered pairs among seven drivers — **105** indexed experiments in the 0.3.3 pack).
 2. Per-fixture spotlights (builtin vs sofia-lab).
 3. Sofia CLI tool smokes.
 4. **Live OPTIONS** (UDP responder + `sip-options`).
 5. **pytest** on the lab virtualenv.
 6. **Kamailio observe listener** (`tools/kamailio/`) — UDP fixture delivery → Lua JSON axes.
 
-## Headline suite outcomes (0.3.2 pack, 40 fixtures)
+## Headline suite outcomes (0.3.3 pack, 53 fixtures)
 
 | Pair | agree | diverge | error |
 | --- | ---: | ---: | ---: |
-| Stub pairs | 39 | 0 | 1 |
-| `builtin` vs `sofia-lab` | 35 | 4 | 1 |
-| `pjsip-lab` vs `sofia-lab` | 36 | 1 | 3 |
-| `builtin` vs `kamailio-lab` | 29 | 5 | 6 |
-| `sofia-lab` vs `kamailio-lab` | 30 | 4 | 6 |
-| `pjsip-lab` vs `kamailio-lab` | 30 | 4 | 6 |
+| Stub pairs | 52 | 0 | 1 |
+| `builtin` vs `sofia-lab` | 49 | 3 | 1 |
+| `pjsip-lab` vs `sofia-lab` | 48 | 1 | 4 |
+| `builtin` vs `kamailio-lab` | 41 | 6 | 6 |
+| `sofia-lab` vs `kamailio-lab` | 41 | 6 | 6 |
+| `pjsip-lab` vs `kamailio-lab` | 41 | 5 | 7 |
 
-Kamailio errors concentrate on incomplete messages (`F-MALFORMED-START`, `F-NO-HEADERS`, `F-ONLY-START`, `F-SPACES-START`) — expected for a proxy receive path. Divergences are normalization-class (compact/folded Via, case), not claimed as CVEs.
+Kamailio errors concentrate on incomplete messages and some required-header absences — expected for a proxy receive path. New torture cases (`F-TORTURE-MULTI-CLEN`, `F-TORTURE-UNKNOWN-SCHEME`, trailing Via whitespace) add diverge/error rows without changing the headline class of findings. SDP body fixtures agree across stub and lab pairs under the wire-body axes. Divergences remain normalization-class, not claimed as CVEs.
 
 ## Notable divergences
 
 | Fixture | Pair | Axis behaviour |
 | --- | --- | --- |
-| `F-COMPACT-VIA` | builtin vs sofia/kamailio-lab | Libraries/proxy expand compact `v:`; builtin misses |
-| `F-FOLDED-VIA` | UA labs vs kamailio-lab | Fold handling differs (Kamailio may keep continuation whitespace) |
+| `F-FOLDED-VIA` | builtin vs sofia/kamailio-lab | Fold unfold / retained continuation whitespace |
 | `F-LOWER-SIP` | cross-lab | Method / SIP-version case policy differs |
 | `F-SPACES-START` | builtin vs sofia-lab | Sofia collapses status whitespace; Kamailio often **errors** |
+| `F-TORTURE-WS-END` · `F-TORTURE-DUP-VIA` · `F-TORTURE-MULTI-CLEN` | vs kamailio-lab | Via extraction / receive-path oddities |
+| `F-TORTURE-UNKNOWN-SCHEME` | vs kamailio / pjsip-lab | Unknown Request-URI scheme → empty R-URI or parse error |
 
 ## Live OPTIONS
 

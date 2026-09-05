@@ -15,8 +15,17 @@ class CompareStatus(str, Enum):
     SKIP = "skip"  # driver missing / not implemented
 
 
-# Oracle axes compared in Phase 2 (start-line + selected headers).
-COMPARE_AXES: tuple[str, ...] = ("start_line", "status_code", "via", "cseq")
+# Oracle axes: signalling headers + body/SDP fingerprint.
+COMPARE_AXES: tuple[str, ...] = (
+    "start_line",
+    "status_code",
+    "via",
+    "cseq",
+    "content_type",
+    "content_length",
+    "body_sha256",
+    "sdp_sha256",
+)
 
 
 @dataclass(frozen=True)
@@ -29,6 +38,10 @@ class StackObservation:
     status_code: int | None = None
     via: str | None = None
     cseq: str | None = None
+    content_type: str | None = None
+    content_length: int | None = None
+    body_sha256: str | None = None
+    sdp_sha256: str | None = None
     detail: str = ""
 
 

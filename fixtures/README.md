@@ -30,6 +30,9 @@ Pinned SIP message snippets for differential runs (CRLF wire).
 | `F-JUNK-AFTER` | `junk_after_message.sip` | Trailer junk |
 | `F-MISSING-VIA` / `F-MISSING-CSEQ` | … | Required-header absences |
 | `F-BAD-STATUS` | `bad_status_code.sip` | Non-standard 999 |
-| `F-TORTURE-*` | `torture_*.sip` | RFC 4475–inspired edges (LWS, escaped URI, long URI, bad Content-Length, dup Via/CSeq, non-ASCII Warning, NUL body) |
+| `F-TORTURE-*` | `torture_*.sip` | RFC 4475–inspired edges (expanded set) |
+| `F-INVITE-SDP` / `F-200-SDP` / `F-SDP-TRAIL-WS` | `*sdp*.sip` | SDP body + trailing-whitespace SDP |
+| `F-COMPACT-CTYPE` | `compact_ctype.sip` | Compact `c:` / `l:` with SDP |
+| `F-MESSAGE-BODY` | `message_body.sip` | Plain-text MESSAGE body |
 
-Regenerate: `python tools/gen_extra_fixtures.py && python tools/gen_torture_fixtures.py && python tools/normalize_fixtures.py`
+Regenerate: `python tools/gen_extra_fixtures.py && python tools/gen_torture_fixtures.py && python tools/gen_sdp_fixtures.py && python tools/normalize_fixtures.py`

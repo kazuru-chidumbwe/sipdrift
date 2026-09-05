@@ -4,7 +4,7 @@ Differential testing harness for open-source SIP/VoIP stacks.
 
 ## Status
 
-**`0.3.2`** — PJSIP + Sofia **library** labs, **Kamailio proxy-tier** lab (`kamailio-lab`), 40 fixtures, JOSS draft under `paper/`.
+**`0.3.3`** — body/SDP oracle axes, 53 fixtures (expanded RFC 4475–class + SDP), Kamailio lab, JOSS draft under `paper/`.
 
 Drivers: `builtin` · `pjsip-stub` · `sofia-stub` · `kamailio-stub` · `pjsip-lab` · `sofia-lab` · `kamailio-lab`
 

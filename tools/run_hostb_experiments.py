@@ -114,6 +114,10 @@ def main() -> int:
                 "status_code": case.left.status_code,
                 "via": case.left.via,
                 "cseq": case.left.cseq,
+                "content_type": case.left.content_type,
+                "content_length": case.left.content_length,
+                "body_sha256": case.left.body_sha256,
+                "sdp_sha256": case.left.sdp_sha256,
                 "detail": case.left.detail,
             },
             "right": {
@@ -123,6 +127,10 @@ def main() -> int:
                 "status_code": case.right.status_code,
                 "via": case.right.via,
                 "cseq": case.right.cseq,
+                "content_type": case.right.content_type,
+                "content_length": case.right.content_length,
+                "body_sha256": case.right.body_sha256,
+                "sdp_sha256": case.right.sdp_sha256,
                 "detail": case.right.detail,
             },
         }

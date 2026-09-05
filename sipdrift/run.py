@@ -10,6 +10,12 @@ from sipdrift.fixtures import FIXTURE_INDEX, load_fixture
 from sipdrift.harness import CompareCase, CompareStatus, classify_observations
 
 
+def _short_hash(value: str | None) -> str:
+    if value is None:
+        return "None"
+    return value[:12] + "…" if len(value) > 12 else value
+
+
 def run_compare(
     fixture_id: str,
     left: StackDriver,
@@ -39,6 +45,10 @@ def observation_to_dict(obs: Any) -> dict[str, Any]:
         "status_code": obs.status_code,
         "via": obs.via,
         "cseq": obs.cseq,
+        "content_type": obs.content_type,
+        "content_length": obs.content_length,
+        "body_sha256": obs.body_sha256,
+        "sdp_sha256": obs.sdp_sha256,
         "ok": obs.ok,
         "detail": obs.detail,
     }
@@ -78,12 +88,18 @@ def format_report(case: CompareCase, fmt: str = "text") -> str:
         (
             f"left:    {case.left.stack_id} ok={case.left.ok} "
             f"start_line={case.left.start_line!r} status={case.left.status_code} "
-            f"via={case.left.via!r} cseq={case.left.cseq!r}"
+            f"via={case.left.via!r} cseq={case.left.cseq!r} "
+            f"ctype={case.left.content_type!r} clen={case.left.content_length} "
+            f"body={_short_hash(case.left.body_sha256)} "
+            f"sdp={_short_hash(case.left.sdp_sha256)}"
         ),
         (
             f"right:   {case.right.stack_id} ok={case.right.ok} "
             f"start_line={case.right.start_line!r} status={case.right.status_code} "
-            f"via={case.right.via!r} cseq={case.right.cseq!r}"
+            f"via={case.right.via!r} cseq={case.right.cseq!r} "
+            f"ctype={case.right.content_type!r} clen={case.right.content_length} "
+            f"body={_short_hash(case.right.body_sha256)} "
+            f"sdp={_short_hash(case.right.sdp_sha256)}"
         ),
     ]
     if case.notes:

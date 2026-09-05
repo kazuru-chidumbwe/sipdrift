@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from sipdrift.drivers.lab_json import observation_from_lab_json
 from sipdrift.harness import StackObservation
 
 _DEFAULT_BIN = Path(__file__).resolve().parents[2] / "tools" / "sofia_observe"
@@ -85,12 +86,6 @@ class SofiaLabDriver:
                 ok=False,
                 detail=f"json parse: {exc}; raw={json_line[:200]}",
             )
-        return StackObservation(
-            stack_id=self.stack_id,
-            start_line=data.get("start_line"),
-            status_code=data.get("status_code"),
-            via=data.get("via"),
-            cseq=data.get("cseq"),
-            ok=bool(data.get("ok")),
-            detail=str(data.get("detail") or "sofia-lab"),
+        return observation_from_lab_json(
+            self.stack_id, data, raw=raw, default_detail="sofia-lab"
         )

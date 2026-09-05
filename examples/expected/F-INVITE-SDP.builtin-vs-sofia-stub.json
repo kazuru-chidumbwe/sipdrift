@@ -1,0 +1,31 @@
+{
+  "fixture_id": "F-INVITE-SDP",
+  "status": "agree",
+  "left": {
+    "stack_id": "builtin",
+    "start_line": "INVITE sip:bob@example.com SIP/2.0",
+    "status_code": null,
+    "via": "SIP/2.0/UDP 192.0.2.1:5060;branch=z9hG4bK-invite-sdp",
+    "cseq": "1 INVITE",
+    "content_type": "application/sdp",
+    "content_length": 139,
+    "body_sha256": "f253cecfcc20c1ea3241a6231bf53e01b928a435eefaa7a5e8439587aa24e4c4",
+    "sdp_sha256": "f253cecfcc20c1ea3241a6231bf53e01b928a435eefaa7a5e8439587aa24e4c4",
+    "ok": true,
+    "detail": "request method=INVITE"
+  },
+  "right": {
+    "stack_id": "sofia-stub",
+    "start_line": "INVITE sip:bob@example.com SIP/2.0",
+    "status_code": null,
+    "via": "SIP/2.0/UDP 192.0.2.1:5060;branch=z9hG4bK-invite-sdp",
+    "cseq": "1 INVITE",
+    "content_type": "application/sdp",
+    "content_length": 139,
+    "body_sha256": "f253cecfcc20c1ea3241a6231bf53e01b928a435eefaa7a5e8439587aa24e4c4",
+    "sdp_sha256": "f253cecfcc20c1ea3241a6231bf53e01b928a435eefaa7a5e8439587aa24e4c4",
+    "ok": true,
+    "detail": "stub: parse-path only"
+  },
+  "notes": []
+}

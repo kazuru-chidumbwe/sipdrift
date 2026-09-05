@@ -26,11 +26,14 @@ python -m sipdrift.cli suite --left builtin --right sofia-lab --format json
 
 ## 4. Expected JSON (reviewer gold)
 
-Checked-in samples under `examples/expected/`:
+Checked-in samples under `examples/expected/` (includes body/SDP axes from **0.3.3**):
 
 ```bash
 python -m sipdrift.cli compare F-200-MIN --left builtin --right sofia-stub --format json
 # compare to examples/expected/F-200-MIN.builtin-vs-sofia-stub.json
+
+python -m sipdrift.cli compare F-INVITE-SDP --left builtin --right sofia-stub --format json
+# compare to examples/expected/F-INVITE-SDP.builtin-vs-sofia-stub.json
 ```
 
 ```bash

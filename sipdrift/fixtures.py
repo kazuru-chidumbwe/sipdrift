@@ -48,6 +48,19 @@ FIXTURE_INDEX: dict[str, str] = {
     "F-TORTURE-DUP-VIA": "torture_dup_cseq_via.sip",
     "F-TORTURE-NONASCII": "torture_nonascii_reason.sip",
     "F-TORTURE-NULL-IN-BODY": "torture_null_claim.sip",
+    "F-TORTURE-UNRECOG-HDR": "torture_unrecog_hdr.sip",
+    "F-TORTURE-DISPLAY-NAME": "torture_display_name.sip",
+    "F-TORTURE-IPV6-VIA": "torture_ipv6_via.sip",
+    "F-TORTURE-NO-MAGIC-COOKIE": "torture_no_magic.sip",
+    "F-TORTURE-EMPTY-SUBJECT": "torture_empty_subject.sip",
+    "F-TORTURE-MULTI-CLEN": "torture_multi_clen.sip",
+    "F-TORTURE-UNKNOWN-SCHEME": "torture_unknown_scheme.sip",
+    "F-TORTURE-REQ-URI-PARAM": "torture_ruri_param.sip",
+    "F-INVITE-SDP": "invite_sdp.sip",
+    "F-200-SDP": "response_200_sdp.sip",
+    "F-SDP-TRAIL-WS": "sdp_trail_ws.sip",
+    "F-COMPACT-CTYPE": "compact_ctype.sip",
+    "F-MESSAGE-BODY": "message_body.sip",
 }
 
 
