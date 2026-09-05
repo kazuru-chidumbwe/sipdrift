@@ -1,22 +1,20 @@
-# Sipdrift
+# sipdrift
 
-A differential testing harness for open-source SIP/VoIP stacks.
+Differential testing harness for open-source SIP/VoIP stacks.
 
 ## Status
 
-**Early development (`0.2.0`).** Multi-axis oracle + OSS stub pair; lab drivers pending.
-
-Current layout:
+**`0.3.0`** — multi-axis oracle, expanded fixture corpus (32), stub drivers, and lab drivers for **PJSIP** (`pjsip-lab`) and **Sofia-SIP** (`sofia-lab`) via native observe helpers.
 
 - installable package (`sipdrift`)
 - CLI: `status` · `fixtures` · `drivers` · `compare` · `suite` · `--version`
-- parse axes: start-line · status code · Via · CSeq
-- fixture corpus (`fixtures/` — 7 pinned cases)
-- stack drivers: `builtin` · `pjsip-stub` · `sofia-stub`
-- compare harness with multi-axis oracle
-- pytest suite + GitHub Actions CI
+- oracle axes: start-line · status code · Via · CSeq
+- fixture corpus under `fixtures/`
+- drivers: `builtin` · `pjsip-stub` · `sofia-stub` · `pjsip-lab` · `sofia-lab`
+- pytest + GitHub Actions CI
+- JOSS draft: `paper/paper.md` (submit gated by 6-month age clock ~Feb 2027+)
 
-## Quick check
+## Quick check (stub / CI path)
 
 ```bash
 python -m pip install -e ".[dev]"
@@ -25,19 +23,29 @@ sipdrift compare F-200-MIN
 sipdrift suite --right sofia-stub
 ```
 
-## Compare
+## Lab drivers (optional)
+
+Build observe helpers where Sofia-SIP and/or PJSIP are installed:
 
 ```bash
-sipdrift compare F-200-MIN
-sipdrift compare F-200-MIN --left pjsip-stub --right sofia-stub
-sipdrift compare F-200-MIN --format json
+cd tools
+make sofia
+# optional: make pjsip PJDIR=/path/to/pjproject
+export SIPDRIFT_SOFIA_OBSERVE=$PWD/sofia_observe
+export SIPDRIFT_PJSIP_OBSERVE=$PWD/pjsip_observe   # if built
+sipdrift suite --left builtin --right sofia-lab
+sipdrift suite --left pjsip-lab --right sofia-lab
 ```
 
-## Suite
+See [`docs/LAB-DRIVERS.md`](docs/LAB-DRIVERS.md).
+
+## Compare / suite
 
 ```bash
-sipdrift suite
+sipdrift compare F-200-MIN --format json
 sipdrift suite --left builtin --right sofia-stub --format json
+sipdrift drivers
+sipdrift fixtures
 ```
 
 Exit codes: `0` agree / all agree · `1` diverge/error · `2` skip/usage error.
@@ -46,18 +54,16 @@ Exit codes: `0` agree / all agree · `1` diverge/error · `2` skip/usage error.
 
 | Name | Type | Notes |
 | --- | --- | --- |
-| `builtin` | Internal reference | Parse-path axes |
-| `pjsip-stub` | PJSIP-target (GPL-2.0) | Parse-path; lab hook in `docs/LAB-PJSIP.md` |
-| `sofia-stub` | Sofia-SIP-target (LGPL-2.1) | Parse-path stub |
+| `builtin` | Reference | Pure-Python parse path |
+| `pjsip-stub` | Stub | PJSIP-target (GPL-2.0) |
+| `sofia-stub` | Stub | Sofia-SIP-target (LGPL-2.1) |
+| `pjsip-lab` | Lab | `tools/pjsip_observe` (needs pjproject) |
+| `sofia-lab` | Lab | `tools/sofia_observe` (needs libsofia-sip-ua) |
 
-## Oracle axes
-
-`start_line` · `status_code` · `via` · `cseq`
-
-Known results: [`docs/DIVERGENCES.md`](docs/DIVERGENCES.md)
+Known divergences: [`docs/DIVERGENCES.md`](docs/DIVERGENCES.md)
 
 ## License
 
 MIT — see [LICENSE](LICENSE).
 
-PJSIP (GPL-2.0) and Sofia-SIP (LGPL-2.1) are planned lab stacks.
+PJSIP (GPL-2.0) and Sofia-SIP (LGPL-2.1) remain separate lab dependencies.

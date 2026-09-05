@@ -5,7 +5,7 @@ from sipdrift.parse import split_start_line
 
 
 def test_version_pinned():
-    assert __version__ == "0.2.0"
+    assert __version__ == "0.3.0"
 
 
 def test_split_start_line_request():

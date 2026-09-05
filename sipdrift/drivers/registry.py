@@ -3,18 +3,24 @@
 from __future__ import annotations
 
 from sipdrift.drivers.builtin import BuiltinDriver
+from sipdrift.drivers.pjsip_lab import PjsipLabDriver
 from sipdrift.drivers.pjsip_stub import PjsipStubDriver
 from sipdrift.drivers.protocol import StackDriver
+from sipdrift.drivers.sofia_lab import SofiaLabDriver
 from sipdrift.drivers.sofia_stub import SofiaStubDriver
 
 _BUILTIN = BuiltinDriver()
 _PJSIP_STUB = PjsipStubDriver()
+_PJSIP_LAB = PjsipLabDriver()
 _SOFIA_STUB = SofiaStubDriver()
+_SOFIA_LAB = SofiaLabDriver()
 
 DRIVERS: dict[str, StackDriver] = {
     _BUILTIN.stack_id: _BUILTIN,
     _PJSIP_STUB.stack_id: _PJSIP_STUB,
+    _PJSIP_LAB.stack_id: _PJSIP_LAB,
     _SOFIA_STUB.stack_id: _SOFIA_STUB,
+    _SOFIA_LAB.stack_id: _SOFIA_LAB,
 }
 
 

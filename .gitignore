@@ -15,3 +15,8 @@ venv/
 htmlcov/
 *.log
 .DS_Store
+tools/sofia_observe
+tools/pjsip_observe
+tools/*.o
+tmpup/
+tmpup2/
