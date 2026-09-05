@@ -20,27 +20,27 @@ bibliography: paper.bib
 
 # Summary
 
-Session Initiation Protocol (SIP) stacks are the control-plane substrate for Voice over IP (VoIP), unified communications, and many telecom edge deployments [@rfc3261]. Open-source implementations — notably PJSIP, Sofia-SIP, and Kamailio-class proxies — are routinely combined in production platforms and research testbeds. Interoperability defects and semantic divergences between stacks are a recurring source of mis-routing, toll-fraud exposure, and security bypasses that single-stack conformance suites do not surface.
+Session Initiation Protocol (SIP) stacks are the control-plane substrate for Voice over IP (VoIP), unified communications, and many telecom edge deployments [@rfc3261]. Open-source implementations — notably PJSIP [@pjsip], Sofia-SIP [@sofia], and Kamailio-class proxies [@kamailio] — are routinely combined in production platforms and research testbeds. Interoperability defects and semantic divergences between stacks are a recurring source of mis-routing, toll-fraud exposure, and security bypasses that single-stack conformance suites do not surface.
 
-**sipdrift** is an open-source differential testing harness for SIP message handling. It runs a pinned corpus of SIP fixtures through multiple stack drivers, normalizes each driver's observations onto shared oracle axes (start-line, status code, Via, CSeq), and classifies each fixture as `agree`, `diverge`, `error`, or `skip`. The harness ships a Python package with a `StackDriver` protocol, stub and lab drivers for PJSIP and Sofia-SIP, a `compare`/`suite` CLI with text and JSON reports, and GitHub Actions continuous integration.
+**sipdrift** is an open-source differential testing harness for SIP message handling. It runs a pinned corpus of SIP fixtures through multiple stack drivers, normalizes each driver's observations onto shared oracle axes (start-line, status code, Via, CSeq), and classifies each fixture as `agree`, `diverge`, `error`, or `skip`. The harness ships a Python package with a `StackDriver` protocol, stub and lab drivers for PJSIP and Sofia-SIP, a `compare`/`suite` CLI with text and JSON reports, GitHub Actions continuous integration, and a JOSS-oriented paper pack under `paper/`.
 
 # Statement of need
 
-Production VoIP platforms assemble SIP proxies, media servers, session border controllers, and edge firewalls from different vendors and OSS projects. RFC 3261 conformance is necessary but not sufficient: stacks diverge on compact-form headers, folded header lines, whitespace tolerance, unknown methods, and incomplete messages [@rfc3261; @rfc4475]. Those divergences matter for operators who must reason about what a peer will accept or rewrite, and for researchers studying protocol robustness and defence-in-depth at the signalling layer.
+Production VoIP platforms assemble SIP proxies, media servers, session border controllers, and edge firewalls from different vendors and OSS projects. RFC 3261 conformance is necessary but not sufficient: stacks diverge on compact-form headers, folded header lines, whitespace tolerance, escaped URIs, unknown methods, and incomplete messages [@rfc3261; @rfc4475]. Those divergences matter for operators who must reason about what a peer will accept or rewrite, and for researchers studying protocol robustness and defence-in-depth at the signalling layer.
 
 Existing SIP tooling clusters into four useful but incomplete categories:
 
 1. **Load / scenario tools** such as SIPp generate traffic against a single target [@sipp].
 2. **Interop events** such as SIPit expose live multi-vendor behaviour but are not a reproducible fixture corpus [@sipit].
 3. **Single-stack unit and conformance tests** validate one implementation in isolation.
-4. **Protocol fuzzers** find crashes and assertion failures but rarely emit a structured cross-stack agreement classification [@afl; @resolfuzz].
+4. **Protocol fuzzers** find crashes and assertion failures but rarely emit a structured cross-stack agreement classification [@afl; @resolfuzz; @resolverfuzz].
 
-sipdrift fills the gap with a **repeatable differential oracle**: identical fixtures, multiple drivers, shared axes, and machine-readable outcomes. The design follows the same fixture-driven differential pattern used in related network and credential-stack measurement work (DNS StackDiff; eMRTD differential harnesses), specialised here to SIP message observation rather than live call completion.
+sipdrift fills the gap with a **repeatable differential oracle**: identical fixtures, multiple drivers, shared axes, and machine-readable outcomes. The design follows the same fixture-driven differential pattern used in related network-stack measurement work, specialised here to SIP message observation rather than live call completion or DNS path consistency.
 
 Who benefits:
 
 - **Operators** comparing candidate SIP stacks or upgrades under controlled inputs before cut-over.
-- **Security researchers** documenting parser and header-handling drift that can enable request smuggling or auth bypass hypotheses.
+- **Security researchers** documenting parser and header-handling drift that can enable request-smuggling or auth-bypass hypotheses.
 - **OSS maintainers** adding regression fixtures when a divergence is fixed or accepted as intentional.
 
 # Methodology and architecture
@@ -53,7 +53,7 @@ fixture (.sip) → StackDriver.observe() × N → classify_observations() → re
 
 | Layer | Module | Role |
 | --- | --- | --- |
-| Fixtures | `fixtures/*.sip` | Pinned SIP inputs (CRLF wire convention; stable IDs) |
+| Fixtures | `fixtures/*.sip` | Pinned SIP inputs (CRLF wire; stable IDs) |
 | Parse | `sipdrift.parse` | Reference start-line and header extraction |
 | Drivers | `sipdrift.drivers` | `StackDriver` implementations per stack tier |
 | Harness | `sipdrift.harness` | Multi-axis classification oracle |
@@ -63,7 +63,7 @@ fixture (.sip) → StackDriver.observe() × N → classify_observations() → re
 
 ## Oracle axes
 
-Phase 1 compared start-lines only. From **0.2.0**, the default oracle compares:
+From **0.2.0**, the default oracle compares:
 
 | Axis | Meaning |
 | --- | --- |
@@ -72,14 +72,7 @@ Phase 1 compared start-lines only. From **0.2.0**, the default oracle compares:
 | `via` | First Via header value |
 | `cseq` | CSeq header value |
 
-Outcomes:
-
-| Status | Meaning |
-| --- | --- |
-| `agree` | All compared axes match and both observations succeeded |
-| `diverge` | Both succeeded but at least one axis differs |
-| `error` | One or both observations failed |
-| `skip` | Observation unavailable (driver not implemented for an axis) |
+Outcomes: `agree` · `diverge` · `error` · `skip`.
 
 ## Driver tiers
 
@@ -87,21 +80,21 @@ Outcomes:
 | --- | --- | --- |
 | `builtin` | Reference | Pure-Python parse path (not an OSS SIP stack) |
 | `pjsip-stub` / `sofia-stub` | Stub | Same parse path; documents intended OSS targets |
-| `pjsip-lab` | Lab | Subprocess to `tools/pjsip_observe` (PJSIP `pjsip_parse_msg`) |
-| `sofia-lab` | Lab | Subprocess to `tools/sofia_observe` (Sofia-SIP `msg_make`) |
+| `pjsip-lab` | Lab | `tools/pjsip_observe` (`pjsip_parse_msg`) |
+| `sofia-lab` | Lab | `tools/sofia_observe` (Sofia `msg_make`) |
 
-Lab drivers are intended for Lab Test Server / Host B runs where PJSIP and Sofia-SIP are installed. CI continues to exercise stub and reference drivers so the package remains installable without native SIP libraries.
+CI exercises stub and reference drivers so the package remains installable without native SIP libraries. Lab drivers are optional and host-pinned.
 
 ## Fixture corpus
 
-The corpus mixes minimal happy-path messages with adversarial and edge cases: provisional and final responses, compact-form headers, folded Via, multi-Via, lower-case start-lines, tab-separated headers, unknown methods, missing Via/CSeq, junk trailers, and empty/malformed starts. Fixture IDs (e.g. `F-200-MIN`, `F-COMPACT-VIA`) are stable for regression and paper tables.
+Version **0.3.1** ships **40** fixtures: happy-path requests/responses, dialog methods, event packages, compact/folded/multi-Via, case and whitespace edges, incomplete messages, and an RFC 4475–inspired torture subset (LWS around colons, escaped URIs, long URI user parts, mismatched Content-Length, duplicate Via/CSeq, non-ASCII Warning text, NUL-in-body claims).
 
 ## Threats to validity
 
-- **Observation ≠ full stack behaviour.** Drivers currently observe parse/normalization of a fixture blob; they do not yet exercise transaction state machines or media.
-- **Normalization differences are real divergences** under the chosen axes, but may be intentional stack policy rather than bugs.
-- **Lab binaries are host-pinned.** Reproducers must install matching Sofia-SIP / PJSIP builds or fall back to stub drivers.
-- **Corpus bias.** Fixtures emphasise header/start-line edges; SDP bodies and dialog long-runs are future work.
+- Drivers observe **parse/normalization** of a fixture blob — not full transaction or media state machines.
+- Normalization differences are real under the chosen axes, but may be intentional stack policy.
+- Lab binaries are host-pinned; reproducers without Sofia/PJSIP fall back to stubs.
+- Kamailio proxy-tier observation is scoped but not implemented [@kamailio] — see `docs/KAMAILIO-SCOPE.md`.
 
 # State of the field
 
@@ -110,32 +103,49 @@ The corpus mixes minimal happy-path messages with adversarial and edge cases: pr
 | SIPp scenarios [@sipp] | Scalable load, scripted call flows | Single-target; no multi-stack normalized oracle |
 | SIPit / interop events [@sipit] | Live multi-vendor exposure | Not a pinned, replayable corpus |
 | RFC 4475 torture tests [@rfc4475] | Canonical hard cases | Usually applied one stack at a time |
-| Protocol fuzzing [@afl] | Crash discovery | Weak structured agree/diverge reporting |
-| Kamailio / FreeSWITCH test suites | Deep project coverage | Not cross-stack by construction |
+| Differential DNS fuzzing [@resolfuzz; @resolverfuzz] | Semantic diverge discovery | DNS, not SIP message fixtures |
+| Project-local test suites | Deep coverage for one stack | Not cross-stack by construction |
 
-sipdrift is complementary: it consumes torture-style and operator-authored fixtures and asks a differential question — *do these stacks agree on these axes under this input?*
+sipdrift asks: *do these stacks agree on these axes under this input?*
 
-# Experiments (Host B lab, 5 Sep 2026)
+# Results
 
-Lab host: ephemeral Host B `10.4.0.32` (Ubuntu 24.04). Installed Sofia-SIP `1.12.11` from distro packages; built PJSIP (pjproject) from upstream source. Expanded corpus to **32** fixtures. Experiment classes:
+## Lab setup
 
-1. **Driver-pair suites** — full corpus across all registered driver pairs (`builtin`, `pjsip-stub`, `sofia-stub`, `sofia-lab`, `pjsip-lab`) — **20 suites × 32 fixtures**.
-2. **Per-fixture spotlight** — `builtin` vs `sofia-lab` on every fixture ID (**32 compares**).
-3. **Sofia CLI tool smokes** — `sip-date`, `localinfo`, `addrinfo`, `sip-dig`, `sip-options`, `stunc`.
-4. **Live OPTIONS** — UDP responder + `sip-options` against `127.0.0.1` (bind/path still noisy on Host B; kept as exploratory).
-5. **pytest regression** — package test suite on the lab venv.
+Ephemeral Host B (`10.4.0.32`, Ubuntu 24.04, 16 vCPU). Sofia-SIP `1.12.11` from distro packages; PJSIP built from upstream pjproject. Packs written under `/opt/atlas/sipdrift-packs/`. Canonical Results pack: **`sipdrift-hostb-20260905T012008Z`** (`0.3.1`, 40 fixtures, live OPTIONS fixed).
 
-Headline lab results (pack `sipdrift-hostb-20260905T010835Z`):
+## Experiment classes
+
+1. Full-corpus **driver-pair suites** (all ordered pairs among five drivers).
+2. Per-fixture **builtin vs sofia-lab** spotlights.
+3. Sofia CLI tool smokes (`sip-date`, `localinfo`, `addrinfo`, `sip-dig`, `sip-options`, `stunc`).
+4. **Live OPTIONS** via UDP responder + Sofia `sip-options` (`-m sip:127.0.0.1:15061` → `sip:127.0.0.1:15060`).
+5. **pytest** on the lab virtualenv.
+
+## Headline suite outcomes (0.3.1 pack `sipdrift-hostb-20260905T012008Z`, 40 fixtures)
 
 | Pair | agree | diverge | error |
 | --- | ---: | ---: | ---: |
-| stub pairs (`builtin`/`pjsip-stub`/`sofia-stub`) | 31 | 0 | 1 |
-| `builtin` vs `sofia-lab` | 27 | 4 | 1 |
-| `pjsip-lab` vs `sofia-lab` | 28 | 1 | 3 |
+| Stub pairs (`builtin` / `pjsip-stub` / `sofia-stub`) | 39 | 0 | 1 |
+| `builtin` vs `sofia-lab` | 35 | 4 | 1 |
+| `pjsip-lab` vs `sofia-lab` | 36 | 1 | 3 |
+| `builtin` vs `pjsip-lab` | 33 | 4 | 3 |
 
-Notable divergences: compact Via expansion, folded Via unfold, lower-case SIP version normalization, status-line whitespace collapse; PJSIP vs Sofia method-case on `F-LOWER-SIP`. Details in `docs/DIVERGENCES.md`.
+The single stub-tier error is `F-MALFORMED-START` (expected). Torture fixtures (8) did not add new sofia-lab diverge rows beyond the four normalization cases above.
 
-Packs are archived under Atlas `CURRENT-WORK/sipdrift/lab-pull-hostb/`; stub-tier pairs agree on shared parse axes, while lab-vs-reference pairs surface honest normalization differences that populate the divergences table.
+## Notable divergences
+
+| Fixture | Pair | Axis behaviour |
+| --- | --- | --- |
+| `F-COMPACT-VIA` | builtin vs sofia-lab | Builtin misses compact `v:`; Sofia expands Via |
+| `F-FOLDED-VIA` | builtin vs sofia-lab | Builtin keeps folded fragment; Sofia unfolds `branch` |
+| `F-LOWER-SIP` | builtin vs sofia-lab | Sofia normalizes `sip/2.0` → `SIP/2.0` |
+| `F-SPACES-START` | builtin vs sofia-lab | Sofia collapses extra spaces in status line |
+| `F-LOWER-SIP` | pjsip-lab vs sofia-lab | PJSIP uppercases method; Sofia preserves `invite` |
+
+## Live OPTIONS
+
+With the responder bound on `0.0.0.0:15060` and `sip-options` using a distinct local bind URL on port `15061`, Host B returns `SIP/2.0 200 OK` for default, `--all`, and `--1XX` probes (**rc=0**). This is complementary to fixture differential runs — not a claim about production SBCs.
 
 # Reproducibility and smoke gate
 
@@ -150,32 +160,21 @@ python -m sipdrift.cli compare F-200-MIN
 python -m sipdrift.cli suite --right sofia-stub
 ```
 
-Expected: `compare` exit **0** (`agree`); `suite` exit **1** when the malformed fixture errors (remaining cases agree under stub pairs).
+Expected: `compare` exit **0** (`agree`); `suite` exit **1** when the malformed fixture errors (remaining stub-pair cases agree).
 
-JSON:
-
-```bash
-python -m sipdrift.cli compare F-200-MIN --format json
-python -m sipdrift.cli drivers
-python -m sipdrift.cli fixtures
-```
+See also `examples/README.md`.
 
 ## Lab path (optional)
-
-On a host with Sofia-SIP development packages:
 
 ```bash
 cd tools && make sofia
 export SIPDRIFT_SOFIA_OBSERVE=$PWD/sofia_observe
 python -m sipdrift.cli suite --left builtin --right sofia-lab
-```
 
-With a built pjproject tree:
-
-```bash
 cd tools && make pjsip PJDIR=/path/to/pjproject
 export SIPDRIFT_PJSIP_OBSERVE=$PWD/pjsip_observe
-python -m sipdrift.cli suite --left builtin --right pjsip-lab
+python -m sipdrift.cli suite --left pjsip-lab --right sofia-lab
+python tools/run_hostb_experiments.py
 ```
 
 ## Continuous integration

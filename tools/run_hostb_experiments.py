@@ -156,21 +156,29 @@ def main() -> int:
     responder = ROOT / "tools" / "sip_udp_responder.py"
     if responder.is_file():
         port = 15060
+        bind_port = 15061
         proc = subprocess.Popen(
-            [sys.executable, str(responder), "--port", str(port)],
+            [sys.executable, str(responder), "--host", "0.0.0.0", "--port", str(port)],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
         )
-        time.sleep(0.5)
+        time.sleep(0.6)
         try:
             for label, extra in [
                 ("options-default", []),
                 ("options-all", ["--all"]),
-                ("options-method-info", ["--method=INFO"]),
+                ("options-1xx", ["--1XX"]),
             ]:
                 name = f"E-live-{label}"
-                cmd = ["sip-options", "-m", f"sip:*:{port}", f"sip:127.0.0.1:{port}", *extra]
+                # Sofia sip-options: -m/--bind local contact URL, then target URL.
+                cmd = [
+                    "sip-options",
+                    "-m",
+                    f"sip:127.0.0.1:{bind_port}",
+                    f"sip:127.0.0.1:{port}",
+                    *extra,
+                ]
                 result = run_cmd(cmd, timeout=10)
                 write_json(out / f"{name}.json", {"experiment": name, **result})
                 experiments.append({"id": name, "kind": "live", "rc": result["rc"], "cmd": cmd})
@@ -184,10 +192,6 @@ def main() -> int:
 
     # E5: pytest regression on host
     name = "E-pytest"
-    result = run_cmd([sys.executable, "-m", "pytest", "-q"], timeout=120)
-    # run from ROOT
-    result = run_cmd([sys.executable, "-m", "pytest", "-q"], timeout=120)
-    # fix cwd
     started = time.time()
     proc = subprocess.run(
         [sys.executable, "-m", "pytest", "-q"],

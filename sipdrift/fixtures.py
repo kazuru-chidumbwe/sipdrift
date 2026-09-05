@@ -40,6 +40,14 @@ FIXTURE_INDEX: dict[str, str] = {
     "F-MISSING-VIA": "missing_via.sip",
     "F-MISSING-CSEQ": "missing_cseq.sip",
     "F-BAD-STATUS": "bad_status_code.sip",
+    "F-TORTURE-WS-END": "torture_ws_end.sip",
+    "F-TORTURE-LWS-COLON": "torture_lws_colon.sip",
+    "F-TORTURE-ESCAPED-URI": "torture_escaped_uri.sip",
+    "F-TORTURE-LONG-URI": "torture_long_uri.sip",
+    "F-TORTURE-BAD-CLEN": "torture_bad_clen.sip",
+    "F-TORTURE-DUP-VIA": "torture_dup_cseq_via.sip",
+    "F-TORTURE-NONASCII": "torture_nonascii_reason.sip",
+    "F-TORTURE-NULL-IN-BODY": "torture_null_claim.sip",
 }
 
 
@@ -64,4 +72,4 @@ def load_fixture(fixture_id: str) -> str:
     except KeyError as exc:
         raise KeyError(f"unknown fixture id: {fixture_id}") from exc
     path = FIXTURES_DIR / name
-    return path.read_text(encoding="utf-8")
+    return path.read_bytes().decode("utf-8", errors="replace")

@@ -25,7 +25,11 @@ def normalize(text: str) -> bytes:
 
 def main() -> None:
     for path in sorted(FIX.glob("*.sip")):
-        raw = path.read_text(encoding="utf-8", errors="replace")
+        raw_bytes = path.read_bytes()
+        if b"\x00" in raw_bytes:
+            print(f"skip binary fixture {path.name}")
+            continue
+        raw = raw_bytes.decode("utf-8", errors="replace")
         path.write_bytes(normalize(raw))
         print(f"normalized {path.name}")
 
