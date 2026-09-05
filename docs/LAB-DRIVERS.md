@@ -26,7 +26,18 @@ python -m sipdrift.cli suite --left builtin --right pjsip-lab
 
 Helper: `tools/pjsip_observe.c` → uses `pjsip_parse_msg`.
 
-## Environment
+## Kamailio (`kamailio-lab`)
+
+```bash
+sudo apt-get install -y kamailio kamailio-lua-modules
+bash tools/kamailio/start_observe.sh
+export SIPDRIFT_KAMAILIO_HOST=127.0.0.1
+export SIPDRIFT_KAMAILIO_PORT=5090
+export SIPDRIFT_KAMAILIO_OBS=/tmp/sipdrift-kamailio-obs.json
+python -m sipdrift.cli suite --left sofia-lab --right kamailio-lab
+```
+
+See [`KAMAILIO-SCOPE.md`](KAMAILIO-SCOPE.md).
 
 | Variable | Purpose |
 | --- | --- |

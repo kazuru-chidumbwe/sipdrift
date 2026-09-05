@@ -1,0 +1,23 @@
+{
+  "fixture_id": "F-INVITE-MIN",
+  "status": "agree",
+  "left": {
+    "stack_id": "builtin",
+    "start_line": "INVITE sip:bob@example.com SIP/2.0",
+    "status_code": null,
+    "via": "SIP/2.0/UDP 192.0.2.1:5060;branch=z9hG4bK-sipdrift-invite-min",
+    "cseq": "1 INVITE",
+    "ok": true,
+    "detail": "request method=INVITE"
+  },
+  "right": {
+    "stack_id": "kamailio-stub",
+    "start_line": "INVITE sip:bob@example.com SIP/2.0",
+    "status_code": null,
+    "via": "SIP/2.0/UDP 192.0.2.1:5060;branch=z9hG4bK-sipdrift-invite-min",
+    "cseq": "1 INVITE",
+    "ok": true,
+    "detail": "stub: parse-path only"
+  },
+  "notes": []
+}

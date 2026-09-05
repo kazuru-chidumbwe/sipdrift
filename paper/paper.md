@@ -82,19 +82,20 @@ Outcomes: `agree` · `diverge` · `error` · `skip`.
 | `pjsip-stub` / `sofia-stub` | Stub | Same parse path; documents intended OSS targets |
 | `pjsip-lab` | Lab | `tools/pjsip_observe` (`pjsip_parse_msg`) |
 | `sofia-lab` | Lab | `tools/sofia_observe` (Sofia `msg_make`) |
+| `kamailio-stub` / `kamailio-lab` | Stub / Lab | Proxy-tier UDP observe (`tools/kamailio/`) |
 
 CI exercises stub and reference drivers so the package remains installable without native SIP libraries. Lab drivers are optional and host-pinned.
 
 ## Fixture corpus
 
-Version **0.3.1** ships **40** fixtures: happy-path requests/responses, dialog methods, event packages, compact/folded/multi-Via, case and whitespace edges, incomplete messages, and an RFC 4475–inspired torture subset (LWS around colons, escaped URIs, long URI user parts, mismatched Content-Length, duplicate Via/CSeq, non-ASCII Warning text, NUL-in-body claims).
+Version **0.3.2** ships **40** fixtures: happy-path requests/responses, dialog methods, event packages, compact/folded/multi-Via, case and whitespace edges, incomplete messages, and an RFC 4475–inspired torture subset (LWS around colons, escaped URIs, long URI user parts, mismatched Content-Length, duplicate Via/CSeq, non-ASCII Warning text, NUL-in-body claims).
 
 ## Threats to validity
 
 - Drivers observe **parse/normalization** of a fixture blob — not full transaction or media state machines.
 - Normalization differences are real under the chosen axes, but may be intentional stack policy.
-- Lab binaries are host-pinned; reproducers without Sofia/PJSIP fall back to stubs.
-- Kamailio proxy-tier observation is scoped but not implemented [@kamailio] — see `docs/KAMAILIO-SCOPE.md`.
+- Lab binaries are host-pinned; reproducers without Sofia/PJSIP/Kamailio fall back to stubs.
+- `kamailio-lab` is a **proxy receive** path (UDP + script dump), not a production routing configuration [@kamailio].
 
 # State of the field
 
@@ -112,40 +113,43 @@ sipdrift asks: *do these stacks agree on these axes under this input?*
 
 ## Lab setup
 
-Ephemeral Host B (`10.4.0.32`, Ubuntu 24.04, 16 vCPU). Sofia-SIP `1.12.11` from distro packages; PJSIP built from upstream pjproject. Packs written under `/opt/atlas/sipdrift-packs/`. Canonical Results pack: **`sipdrift-hostb-20260905T012008Z`** (`0.3.1`, 40 fixtures, live OPTIONS fixed).
+Ephemeral Host B (`10.4.0.32`, Ubuntu 24.04, 16 vCPU). Sofia-SIP `1.12.11` and Kamailio `5.7.4` from distro packages; PJSIP built from upstream pjproject. Packs under `/opt/atlas/sipdrift-packs/`. Canonical Results pack: **`sipdrift-hostb-20260905T012956Z`** (`0.3.2`, 40 fixtures, seven drivers including `kamailio-lab`).
 
 ## Experiment classes
 
-1. Full-corpus **driver-pair suites** (all ordered pairs among five drivers).
-2. Per-fixture **builtin vs sofia-lab** spotlights.
-3. Sofia CLI tool smokes (`sip-date`, `localinfo`, `addrinfo`, `sip-dig`, `sip-options`, `stunc`).
-4. **Live OPTIONS** via UDP responder + Sofia `sip-options` (`-m sip:127.0.0.1:15061` → `sip:127.0.0.1:15060`).
+1. Full-corpus **driver-pair suites** (all ordered pairs among seven drivers — **92** indexed experiments in the 0.3.2 pack).
+2. Per-fixture spotlights (builtin vs sofia-lab).
+3. Sofia CLI tool smokes.
+4. **Live OPTIONS** (UDP responder + `sip-options`).
 5. **pytest** on the lab virtualenv.
+6. **Kamailio observe listener** (`tools/kamailio/`) — UDP fixture delivery → Lua JSON axes.
 
-## Headline suite outcomes (0.3.1 pack `sipdrift-hostb-20260905T012008Z`, 40 fixtures)
+## Headline suite outcomes (0.3.2 pack, 40 fixtures)
 
 | Pair | agree | diverge | error |
 | --- | ---: | ---: | ---: |
-| Stub pairs (`builtin` / `pjsip-stub` / `sofia-stub`) | 39 | 0 | 1 |
+| Stub pairs | 39 | 0 | 1 |
 | `builtin` vs `sofia-lab` | 35 | 4 | 1 |
 | `pjsip-lab` vs `sofia-lab` | 36 | 1 | 3 |
-| `builtin` vs `pjsip-lab` | 33 | 4 | 3 |
+| `builtin` vs `kamailio-lab` | 29 | 5 | 6 |
+| `sofia-lab` vs `kamailio-lab` | 30 | 4 | 6 |
+| `pjsip-lab` vs `kamailio-lab` | 30 | 4 | 6 |
 
-The single stub-tier error is `F-MALFORMED-START` (expected). Torture fixtures (8) did not add new sofia-lab diverge rows beyond the four normalization cases above.
+Kamailio errors concentrate on incomplete messages (`F-MALFORMED-START`, `F-NO-HEADERS`, `F-ONLY-START`, `F-SPACES-START`) — expected for a proxy receive path. Divergences are normalization-class (compact/folded Via, case), not claimed as CVEs.
 
 ## Notable divergences
 
 | Fixture | Pair | Axis behaviour |
 | --- | --- | --- |
-| `F-COMPACT-VIA` | builtin vs sofia-lab | Builtin misses compact `v:`; Sofia expands Via |
-| `F-FOLDED-VIA` | builtin vs sofia-lab | Builtin keeps folded fragment; Sofia unfolds `branch` |
-| `F-LOWER-SIP` | builtin vs sofia-lab | Sofia normalizes `sip/2.0` → `SIP/2.0` |
-| `F-SPACES-START` | builtin vs sofia-lab | Sofia collapses extra spaces in status line |
-| `F-LOWER-SIP` | pjsip-lab vs sofia-lab | PJSIP uppercases method; Sofia preserves `invite` |
+| `F-COMPACT-VIA` | builtin vs sofia/kamailio-lab | Libraries/proxy expand compact `v:`; builtin misses |
+| `F-FOLDED-VIA` | UA labs vs kamailio-lab | Fold handling differs (Kamailio may keep continuation whitespace) |
+| `F-LOWER-SIP` | cross-lab | Method / SIP-version case policy differs |
+| `F-SPACES-START` | builtin vs sofia-lab | Sofia collapses status whitespace; Kamailio often **errors** |
 
 ## Live OPTIONS
 
-With the responder bound on `0.0.0.0:15060` and `sip-options` using a distinct local bind URL on port `15061`, Host B returns `SIP/2.0 200 OK` for default, `--all`, and `--1XX` probes (**rc=0**). This is complementary to fixture differential runs — not a claim about production SBCs.
+Responder `0.0.0.0:15060`; `sip-options -m sip:127.0.0.1:15061 sip:127.0.0.1:15060` — default / `--all` / `--1XX` all **rc=0**.
+
 
 # Reproducibility and smoke gate
 
@@ -171,9 +175,9 @@ cd tools && make sofia
 export SIPDRIFT_SOFIA_OBSERVE=$PWD/sofia_observe
 python -m sipdrift.cli suite --left builtin --right sofia-lab
 
-cd tools && make pjsip PJDIR=/path/to/pjproject
-export SIPDRIFT_PJSIP_OBSERVE=$PWD/pjsip_observe
-python -m sipdrift.cli suite --left pjsip-lab --right sofia-lab
+bash tools/kamailio/start_observe.sh
+export SIPDRIFT_KAMAILIO_PORT=5090
+python -m sipdrift.cli suite --left sofia-lab --right kamailio-lab
 python tools/run_hostb_experiments.py
 ```
 
@@ -183,7 +187,7 @@ GitHub Actions (`.github/workflows/ci.yml`) runs `pytest` on pushes and pull req
 
 # Acknowledgements
 
-Thanks to maintainers of PJSIP and Sofia-SIP for open libraries that make lab drivers possible, and to operators who share SIP edge-case traces that inform fixture design.
+Thanks to maintainers of PJSIP, Sofia-SIP, and Kamailio for open SIP software that makes lab drivers possible, and to operators who share edge-case traces that inform fixture design.
 
 ## AI usage disclosure
 

@@ -24,7 +24,14 @@ export SIPDRIFT_SOFIA_OBSERVE=$PWD/tools/sofia_observe
 python -m sipdrift.cli suite --left builtin --right sofia-lab --format json
 ```
 
-## 4. Host B matrix
+## 4. Expected JSON (reviewer gold)
+
+Checked-in samples under `examples/expected/`:
+
+```bash
+python -m sipdrift.cli compare F-200-MIN --left builtin --right sofia-stub --format json
+# compare to examples/expected/F-200-MIN.builtin-vs-sofia-stub.json
+```
 
 ```bash
 python tools/run_hostb_experiments.py

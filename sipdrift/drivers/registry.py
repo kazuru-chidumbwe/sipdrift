@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from sipdrift.drivers.builtin import BuiltinDriver
+from sipdrift.drivers.kamailio_lab import KamailioLabDriver
+from sipdrift.drivers.kamailio_stub import KamailioStubDriver
 from sipdrift.drivers.pjsip_lab import PjsipLabDriver
 from sipdrift.drivers.pjsip_stub import PjsipStubDriver
 from sipdrift.drivers.protocol import StackDriver
@@ -14,6 +16,8 @@ _PJSIP_STUB = PjsipStubDriver()
 _PJSIP_LAB = PjsipLabDriver()
 _SOFIA_STUB = SofiaStubDriver()
 _SOFIA_LAB = SofiaLabDriver()
+_KAMAILIO_STUB = KamailioStubDriver()
+_KAMAILIO_LAB = KamailioLabDriver()
 
 DRIVERS: dict[str, StackDriver] = {
     _BUILTIN.stack_id: _BUILTIN,
@@ -21,6 +25,8 @@ DRIVERS: dict[str, StackDriver] = {
     _PJSIP_LAB.stack_id: _PJSIP_LAB,
     _SOFIA_STUB.stack_id: _SOFIA_STUB,
     _SOFIA_LAB.stack_id: _SOFIA_LAB,
+    _KAMAILIO_STUB.stack_id: _KAMAILIO_STUB,
+    _KAMAILIO_LAB.stack_id: _KAMAILIO_LAB,
 }
 
 

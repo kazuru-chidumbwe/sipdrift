@@ -1,0 +1,23 @@
+{
+  "fixture_id": "F-200-MIN",
+  "status": "agree",
+  "left": {
+    "stack_id": "builtin",
+    "start_line": "SIP/2.0 200 OK",
+    "status_code": 200,
+    "via": "SIP/2.0/UDP 192.0.2.1:5060;branch=z9hG4bK-sipdrift-invite-min",
+    "cseq": "1 INVITE",
+    "ok": true,
+    "detail": ""
+  },
+  "right": {
+    "stack_id": "sofia-stub",
+    "start_line": "SIP/2.0 200 OK",
+    "status_code": 200,
+    "via": "SIP/2.0/UDP 192.0.2.1:5060;branch=z9hG4bK-sipdrift-invite-min",
+    "cseq": "1 INVITE",
+    "ok": true,
+    "detail": "stub: parse-path only"
+  },
+  "notes": []
+}
