@@ -119,13 +119,23 @@ sipdrift is complementary: it consumes torture-style and operator-authored fixtu
 
 Lab host: ephemeral Host B `10.4.0.32` (Ubuntu 24.04). Installed Sofia-SIP `1.12.11` from distro packages; built PJSIP (pjproject) from upstream source. Expanded corpus to **32** fixtures. Experiment classes:
 
-1. **Driver-pair suites** — full corpus across all registered driver pairs (`builtin`, `pjsip-stub`, `sofia-stub`, `sofia-lab`, `pjsip-lab`).
-2. **Per-fixture spotlight** — `builtin` vs lab drivers on every fixture ID.
+1. **Driver-pair suites** — full corpus across all registered driver pairs (`builtin`, `pjsip-stub`, `sofia-stub`, `sofia-lab`, `pjsip-lab`) — **20 suites × 32 fixtures**.
+2. **Per-fixture spotlight** — `builtin` vs `sofia-lab` on every fixture ID (**32 compares**).
 3. **Sofia CLI tool smokes** — `sip-date`, `localinfo`, `addrinfo`, `sip-dig`, `sip-options`, `stunc`.
-4. **Live OPTIONS** — UDP responder + `sip-options` against `127.0.0.1`.
+4. **Live OPTIONS** — UDP responder + `sip-options` against `127.0.0.1` (bind/path still noisy on Host B; kept as exploratory).
 5. **pytest regression** — package test suite on the lab venv.
 
-Packs are archived under lab pull notes; stub-tier pairs agree on shared parse axes, while lab-vs-reference pairs surface honest normalization differences (compact-form expansion, whitespace, phrase formatting) that populate `docs/DIVERGENCES.md`.
+Headline lab results (pack `sipdrift-hostb-20260905T010835Z`):
+
+| Pair | agree | diverge | error |
+| --- | ---: | ---: | ---: |
+| stub pairs (`builtin`/`pjsip-stub`/`sofia-stub`) | 31 | 0 | 1 |
+| `builtin` vs `sofia-lab` | 27 | 4 | 1 |
+| `pjsip-lab` vs `sofia-lab` | 28 | 1 | 3 |
+
+Notable divergences: compact Via expansion, folded Via unfold, lower-case SIP version normalization, status-line whitespace collapse; PJSIP vs Sofia method-case on `F-LOWER-SIP`. Details in `docs/DIVERGENCES.md`.
+
+Packs are archived under Atlas `CURRENT-WORK/sipdrift/lab-pull-hostb/`; stub-tier pairs agree on shared parse axes, while lab-vs-reference pairs surface honest normalization differences that populate the divergences table.
 
 # Reproducibility and smoke gate
 
