@@ -14,7 +14,7 @@ authors:
 affiliations:
   - name: Independent Researcher
     index: 1
-date: 5 September 2026
+date: 6 September 2026
 bibliography: paper.bib
 ---
 
@@ -140,7 +140,7 @@ Ephemeral Ubuntu 24.04 lab host (16 vCPU). Sofia-SIP `1.12.11` and Kamailio `5.7
 | `sofia-lab` vs `kamailio-lab` | 41 | 6 | 6 |
 | `pjsip-lab` vs `kamailio-lab` | 41 | 5 | 7 |
 
-Kamailio errors concentrate on incomplete messages and some required-header absences — expected for a proxy receive path. New torture cases (`F-TORTURE-MULTI-CLEN`, `F-TORTURE-UNKNOWN-SCHEME`, trailing Via whitespace) add diverge/error rows without changing the headline class of findings. SDP body fixtures agree across stub and lab pairs under the wire-body axes. Divergences remain normalization-class, not claimed as CVEs.
+Against `kamailio-lab`, six fixtures error because the UDP receive script never writes an observation file: `F-MALFORMED-START`, `F-SPACES-START`, `F-NO-HEADERS`, `F-ONLY-START`, `F-MISSING-VIA`, and `F-MISSING-CSEQ`. That pattern is expected for a proxy receive path that drops malformed or header-incomplete messages before the Lua dump runs. Additional torture cases (`F-TORTURE-MULTI-CLEN`, `F-TORTURE-UNKNOWN-SCHEME`, trailing Via whitespace) add **diverge** rows rather than errors. SDP body fixtures agree across stub and UA lab pairs under the wire-body axes. All reported divergences are normalization-class findings — not CVE claims.
 
 ## Notable divergences
 
@@ -154,7 +154,7 @@ Kamailio errors concentrate on incomplete messages and some required-header abse
 
 ## Live OPTIONS
 
-Responder `0.0.0.0:15060`; `sip-options -m sip:127.0.0.1:15061 sip:127.0.0.1:15060` — default / `--all` / `--1XX` all **rc=0**.
+A minimal UDP responder on `0.0.0.0:15060` answers OPTIONS probes from `sip-options`. Three invocation modes — default, `--all`, and `--1XX` — all exit **0**, confirming the lab host can complete a live signalling round-trip outside the fixture replay path.
 
 
 # Reproducibility and smoke gate

@@ -23,6 +23,21 @@ export SIPDRIFT_KAMAILIO_OBS=/tmp/sipdrift-kamailio-obs.json
 python -m sipdrift.cli suite --left sofia-lab --right kamailio-lab
 ```
 
+## Error fixtures (pack `…015940Z`)
+
+Six fixtures against `kamailio-lab` return **error** in the `builtin` vs `kamailio-lab` suite (no observation JSON written). This is expected for the receive-only script path — not a harness bug.
+
+| Fixture | Why Kamailio errors | Library labs |
+| --- | --- | --- |
+| `F-MALFORMED-START` | Unparseable start line; message dropped before Lua dump | builtin also errors |
+| `F-SPACES-START` | Extra whitespace in status line; receive path rejects | Sofia may diverge instead |
+| `F-NO-HEADERS` | Status line only; no headers for script to read | builtin still parses start line |
+| `F-ONLY-START` | Request start line without required headers | Sofia/PJSIP may still parse |
+| `F-MISSING-VIA` | Request without Via; proxy script does not emit axes | UA parsers often tolerate |
+| `F-MISSING-CSEQ` | Request without CSeq; same | UA parsers often tolerate |
+
+When `kamailio-lab` errors, the driver reports `no observation file from kamailio at /tmp/sipdrift-kamailio-obs.json`. Treat these rows as **proxy-tier receive limits**, not CVE claims.
+
 ## Pack
 
-`sipdrift-hostb-20260905T012956Z` — see `docs/DIVERGENCES.md`.
+Canonical lab pack: **`sipdrift-hostb-20260905T015940Z`** (`0.3.3`, 53 fixtures) — see `docs/DIVERGENCES.md`.

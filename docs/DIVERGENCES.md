@@ -2,7 +2,7 @@
 
 Honest record of cross-stack divergences under pinned fixtures.
 
-**Last updated:** 2026-09-05 · **Harness:** `0.3.3` · **Oracle axes:** `start_line`, `status_code`, `via`, `cseq`, `content_type`, `content_length`, `body_sha256`, `sdp_sha256`  
+**Last updated:** 2026-09-06 · **Harness:** `0.3.3` · **Oracle axes:** `start_line`, `status_code`, `via`, `cseq`, `content_type`, `content_length`, `body_sha256`, `sdp_sha256`  
 **Lab pack:** `sipdrift-hostb-20260905T015940Z` · **Corpus:** 53 fixtures · **Drivers:** 7 (incl. Kamailio)
 
 ## Stub-tier
@@ -43,7 +43,14 @@ SDP and plain-body fixtures (`F-INVITE-SDP`, `F-200-SDP`, `F-SDP-TRAIL-WS`, `F-C
 | `F-LOWER-SIP` | **diverge** | Method/Via case policy differs |
 | `F-TORTURE-WS-END` · `F-TORTURE-DUP-VIA` · `F-TORTURE-MULTI-CLEN` | **diverge** | Via extraction / receive oddities |
 | `F-TORTURE-UNKNOWN-SCHEME` | **diverge** | Empty Request-URI after scheme reject |
-| Incomplete / missing required headers | **error** | Proxy receive path |
+| `F-MALFORMED-START` | **error** | Unparseable wire; no Lua dump |
+| `F-SPACES-START` | **error** | Status-line whitespace rejected on receive |
+| `F-NO-HEADERS` | **error** | Start line only |
+| `F-ONLY-START` | **error** | Request without headers |
+| `F-MISSING-VIA` | **error** | Required header absent for proxy script |
+| `F-MISSING-CSEQ` | **error** | Required header absent for proxy script |
+
+See `docs/KAMAILIO-SCOPE.md` for the full error triage table.
 
 ## Live OPTIONS
 
