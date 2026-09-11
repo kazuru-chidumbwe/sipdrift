@@ -14,3 +14,4 @@ Sparse public history for the JOSS repo-age path. Product docs stay in the READM
 | 2026-09-05 | Kamailio lab driver (UDP+Lua) · 7 drivers · Results delta · pack `…012956Z` | `0.3.2` |
 | 2026-09-05 | Body/SDP axes · 53 fixtures · pack `…015940Z` · voice + Results | `0.3.3` |
 | 2026-09-06 | Kamailio error triage docs · paper voice pass · section citation sync | docs only |
+| 2026-09-12 | Pin Host B pack `…015940Z` SHA-256 into paper reproducibility | JOSS age clock |

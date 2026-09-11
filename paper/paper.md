@@ -118,7 +118,17 @@ sipdrift asks: *do these stacks agree on these axes under this input?*
 
 ## Lab setup
 
-Ephemeral Ubuntu 24.04 lab host (16 vCPU). Sofia-SIP `1.12.11` and Kamailio `5.7.4` from distro packages; PJSIP built from upstream pjproject. Packs under a host-local `/opt/atlas/sipdrift-packs/` tree. Canonical Results pack: **`sipdrift-hostb-20260905T015940Z`** (`0.3.3`, 53 fixtures, seven drivers including `kamailio-lab`).
+Ephemeral Ubuntu 24.04 lab host (16 vCPU). Sofia-SIP `1.12.11` and Kamailio `5.7.4` from distro packages; PJSIP built from upstream pjproject. Packs under a host-local `/opt/atlas/sipdrift-packs/` tree. Canonical Results pack: **`sipdrift-hostb-20260905T015940Z`** (`0.3.3`, 53 fixtures, seven drivers including `kamailio-lab`). Pack index SHA-256 (`EXPERIMENT-INDEX.json`):
+
+```
+7231d56540708c3406c2f0b3af4b53f9f61ce9d304ac1c01a1f9c219f7bd126a
+```
+
+Pack checksum-list SHA-256 (sorted lines `sha256  filename` over the five deposited pack files):
+
+```
+9dcb47784c11db42b4e83778fe9244b6445cd200a1b479bbbd93952edc66a3e3
+```
 
 ## Experiment classes
 
@@ -190,6 +200,21 @@ python tools/run_hostb_experiments.py
 ## Continuous integration
 
 GitHub Actions (`.github/workflows/ci.yml`) runs `pytest` on pushes and pull requests to `main`.
+
+## Lab pack pin
+
+Byte-verify headline Results against Host B pack **`sipdrift-hostb-20260905T015940Z`**:
+
+| Object | SHA-256 |
+| --- | --- |
+| `EXPERIMENT-INDEX.json` | `7231d56540708c3406c2f0b3af4b53f9f61ce9d304ac1c01a1f9c219f7bd126a` |
+| Pack checksum-list (5 files) | `9dcb47784c11db42b4e83778fe9244b6445cd200a1b479bbbd93952edc66a3e3` |
+| `E-suite-builtin-vs-sofia-lab.json` | `e4b04929e8363a4598c747488c85835894d83bf5f8a2325fce580599e9f46559` |
+| `E-suite-pjsip-lab-vs-sofia-lab.json` | `04a057e9ff7b315c293b30add63dbdc8891b62bad1252cbb87863a809a017cf8` |
+| `E-suite-builtin-vs-kamailio-lab.json` | `793331482faa0758092566918131430056963d26ed617be43df45b9b50ea70d6` |
+| `E-suite-sofia-lab-vs-kamailio-lab.json` | `854a74ee52a3667428be662199c3018de8b1e282ab8fe44e225d3bf167efec0e` |
+
+Reproduce locally with `tools/run_hostb_experiments.py` on a lab host that has Sofia/PJSIP/Kamailio observe binaries; compare suite JSON digests to the table above.
 
 # Acknowledgements
 
