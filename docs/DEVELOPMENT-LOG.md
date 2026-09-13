@@ -16,3 +16,4 @@ Sparse public history for the JOSS repo-age path. Product docs stay in the READM
 | 2026-09-06 | Kamailio error triage docs · paper voice pass · section citation sync | docs only |
 | 2026-09-13 | Lab-vs-lab headline Results · builtin framed as calibration | paper voice |
 | 2026-09-13 | CONTRIBUTING · CHANGELOG · CITATION.cff · README/pyproject hygiene | JOSS OSS bar |
+| 2026-09-13 | JOSS 2026 headings · research impact · top-level AI · word-count trim | paper voice |
