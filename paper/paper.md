@@ -88,7 +88,7 @@ Outcomes: `agree` · `diverge` · `error` · `skip`. Body axes fingerprint the d
 | `sofia-lab` | Lab | `tools/sofia_observe` (Sofia `msg_make`) |
 | `kamailio-stub` / `kamailio-lab` | Stub / Lab | Proxy-tier UDP observe (`tools/kamailio/`) |
 
-CI exercises stub and reference drivers so the package remains installable without native SIP libraries. Lab drivers are optional and host-pinned.
+CI exercises stub and reference drivers so the package remains installable without native SIP libraries. Lab drivers are optional and host-pinned. Headline Results therefore lead with `pjsip-lab` / `sofia-lab` / `kamailio-lab` pairs. `builtin` and stub drivers appear in secondary tables as **calibration** and CI-installable fallbacks — they are not a fourth OSS stack in the interop claim.
 
 ## Fixture corpus
 
@@ -101,6 +101,7 @@ Version **0.3.3** ships **53** fixtures: happy-path requests/responses, dialog m
 - Normalization differences are real under the chosen axes, but may be intentional stack policy.
 - Lab binaries are host-pinned; reproducers without Sofia/PJSIP/Kamailio fall back to stubs.
 - `kamailio-lab` is a **proxy receive** path (UDP + script dump), not a production routing configuration [@kamailio].
+- `builtin` and `*-stub` share the harness parse path; agreement among them is not evidence that OSS stacks agree.
 
 # State of the field
 
@@ -112,7 +113,7 @@ Version **0.3.3** ships **53** fixtures: happy-path requests/responses, dialog m
 | Differential DNS fuzzing [@resolfuzz; @resolverfuzz] | Semantic diverge discovery | DNS, not SIP message fixtures |
 | Project-local test suites | Deep coverage for one stack | Not cross-stack by construction |
 
-sipdrift asks: *do these stacks agree on these axes under this input?*
+sipdrift asks: *do these stacks agree on these axes under this input?* Headline Results answer that from **lab-vs-lab** pairs. The `builtin` driver is a harness reference parser used to calibrate lab adapters, not a stack in the interop claim.
 
 # Results
 
@@ -133,7 +134,7 @@ Pack checksum-list SHA-256 (sorted lines `sha256  filename` over the five deposi
 ## Experiment classes
 
 1. Full-corpus **driver-pair suites** (all ordered pairs among seven drivers — **105** indexed experiments in the 0.3.3 pack).
-2. Per-fixture spotlights (builtin vs sofia-lab).
+2. Per-fixture spotlights (lab-vs-lab pairs, plus `builtin` calibration vs `sofia-lab`).
 3. Sofia CLI tool smokes.
 4. **Live OPTIONS** (UDP responder + `sip-options`).
 5. **pytest** on the lab virtualenv.
@@ -141,14 +142,23 @@ Pack checksum-list SHA-256 (sorted lines `sha256  filename` over the five deposi
 
 ## Headline suite outcomes (0.3.3 pack, 53 fixtures)
 
+The headline claim is **lab versus lab**: real OSS stacks compared to each other. `builtin` is a pure-Python reference parse path, not a SIP stack; comparisons against it are **calibration** (does the lab adapter match the harness parser?) and are tabulated second.
+
+### Lab versus lab (headline)
+
+| Pair | agree | diverge | error |
+| --- | ---: | ---: | ---: |
+| `pjsip-lab` vs `sofia-lab` | 48 | 1 | 4 |
+| `pjsip-lab` vs `kamailio-lab` | 41 | 5 | 7 |
+| `sofia-lab` vs `kamailio-lab` | 41 | 6 | 6 |
+
+### Reference and stub (secondary)
+
 | Pair | agree | diverge | error |
 | --- | ---: | ---: | ---: |
 | Stub pairs | 52 | 0 | 1 |
 | `builtin` vs `sofia-lab` | 49 | 3 | 1 |
-| `pjsip-lab` vs `sofia-lab` | 48 | 1 | 4 |
 | `builtin` vs `kamailio-lab` | 41 | 6 | 6 |
-| `sofia-lab` vs `kamailio-lab` | 41 | 6 | 6 |
-| `pjsip-lab` vs `kamailio-lab` | 41 | 5 | 7 |
 
 Against `kamailio-lab`, six fixtures error because the UDP receive script never writes an observation file: `F-MALFORMED-START`, `F-SPACES-START`, `F-NO-HEADERS`, `F-ONLY-START`, `F-MISSING-VIA`, and `F-MISSING-CSEQ`. That pattern is expected for a proxy receive path that drops malformed or header-incomplete messages before the Lua dump runs. Additional torture cases (`F-TORTURE-MULTI-CLEN`, `F-TORTURE-UNKNOWN-SCHEME`, trailing Via whitespace) add **diverge** rows rather than errors. SDP body fixtures agree across stub and UA lab pairs under the wire-body axes. All reported divergences are normalization-class findings — not CVE claims.
 
@@ -156,11 +166,11 @@ Against `kamailio-lab`, six fixtures error because the UDP receive script never 
 
 | Fixture | Pair | Axis behaviour |
 | --- | --- | --- |
-| `F-FOLDED-VIA` | builtin vs sofia/kamailio-lab | Fold unfold / retained continuation whitespace |
-| `F-LOWER-SIP` | cross-lab | Method / SIP-version case policy differs |
-| `F-SPACES-START` | builtin vs sofia-lab | Sofia collapses status whitespace; Kamailio often **errors** |
-| `F-TORTURE-WS-END` · `F-TORTURE-DUP-VIA` · `F-TORTURE-MULTI-CLEN` | vs kamailio-lab | Via extraction / receive-path oddities |
-| `F-TORTURE-UNKNOWN-SCHEME` | vs kamailio / pjsip-lab | Unknown Request-URI scheme → empty R-URI or parse error |
+| `F-LOWER-SIP` | `pjsip-lab` vs `sofia-lab`; also vs `kamailio-lab` | Method / SIP-version case policy differs |
+| `F-FOLDED-VIA` | `sofia-lab` vs `kamailio-lab` | Fold unfold / retained continuation whitespace |
+| `F-TORTURE-UNKNOWN-SCHEME` | `sofia-lab` vs `kamailio-lab` (`pjsip-lab` errors) | Unknown Request-URI scheme → empty R-URI |
+| `F-TORTURE-WS-END` · `F-TORTURE-DUP-VIA` · `F-TORTURE-MULTI-CLEN` | UA labs vs `kamailio-lab` | Via extraction / receive-path oddities |
+| `F-SPACES-START` | `builtin` vs `sofia-lab` (calibration); `kamailio-lab` **errors** | Sofia collapses status whitespace; proxy receive drops |
 
 ## Live OPTIONS
 
@@ -187,13 +197,19 @@ See also `examples/README.md`.
 ## Lab path (optional)
 
 ```bash
-cd tools && make sofia
-export SIPDRIFT_SOFIA_OBSERVE=$PWD/sofia_observe
-python -m sipdrift.cli suite --left builtin --right sofia-lab
+make -C tools sofia
+export SIPDRIFT_SOFIA_OBSERVE=$PWD/tools/sofia_observe
+make -C tools pjsip PJDIR=/path/to/pjproject
+export SIPDRIFT_PJSIP_OBSERVE=$PWD/tools/pjsip_observe
+python -m sipdrift.cli suite --left pjsip-lab --right sofia-lab
 
 bash tools/kamailio/start_observe.sh
 export SIPDRIFT_KAMAILIO_PORT=5090
 python -m sipdrift.cli suite --left sofia-lab --right kamailio-lab
+python -m sipdrift.cli suite --left pjsip-lab --right kamailio-lab
+
+# Secondary: harness reference vs a lab driver
+python -m sipdrift.cli suite --left builtin --right sofia-lab
 python tools/run_hostb_experiments.py
 ```
 
@@ -209,10 +225,10 @@ Byte-verify headline Results against Host B pack **`sipdrift-hostb-20260905T0159
 | --- | --- |
 | `EXPERIMENT-INDEX.json` | `7231d56540708c3406c2f0b3af4b53f9f61ce9d304ac1c01a1f9c219f7bd126a` |
 | Pack checksum-list (5 files) | `9dcb47784c11db42b4e83778fe9244b6445cd200a1b479bbbd93952edc66a3e3` |
-| `E-suite-builtin-vs-sofia-lab.json` | `e4b04929e8363a4598c747488c85835894d83bf5f8a2325fce580599e9f46559` |
 | `E-suite-pjsip-lab-vs-sofia-lab.json` | `04a057e9ff7b315c293b30add63dbdc8891b62bad1252cbb87863a809a017cf8` |
-| `E-suite-builtin-vs-kamailio-lab.json` | `793331482faa0758092566918131430056963d26ed617be43df45b9b50ea70d6` |
 | `E-suite-sofia-lab-vs-kamailio-lab.json` | `854a74ee52a3667428be662199c3018de8b1e282ab8fe44e225d3bf167efec0e` |
+| `E-suite-builtin-vs-sofia-lab.json` | `e4b04929e8363a4598c747488c85835894d83bf5f8a2325fce580599e9f46559` |
+| `E-suite-builtin-vs-kamailio-lab.json` | `793331482faa0758092566918131430056963d26ed617be43df45b9b50ea70d6` |
 
 Reproduce locally with `tools/run_hostb_experiments.py` on a lab host that has Sofia/PJSIP/Kamailio observe binaries; compare suite JSON digests to the table above.
 

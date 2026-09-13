@@ -21,6 +21,10 @@ Requires `tools/sofia_observe` and/or `tools/pjsip_observe` — see `docs/LAB-DR
 
 ```bash
 export SIPDRIFT_SOFIA_OBSERVE=$PWD/tools/sofia_observe
+export SIPDRIFT_PJSIP_OBSERVE=$PWD/tools/pjsip_observe
+python -m sipdrift.cli suite --left pjsip-lab --right sofia-lab --format json
+
+# Secondary: harness reference vs a lab driver
 python -m sipdrift.cli suite --left builtin --right sofia-lab --format json
 ```
 

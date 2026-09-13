@@ -13,13 +13,15 @@ Honest record of cross-stack divergences under pinned fixtures.
 
 ## Lab-tier headlines (pack `…015940Z`)
 
+Headline is **lab versus lab**. `builtin` rows are calibration (reference parser, not an OSS stack).
+
 | Pair | agree | diverge | error |
 | --- | ---: | ---: | ---: |
-| `builtin` vs `sofia-lab` | 49 | 3 | 1 |
 | `pjsip-lab` vs `sofia-lab` | 48 | 1 | 4 |
-| `builtin` vs `kamailio-lab` | 41 | 6 | 6 |
-| `sofia-lab` vs `kamailio-lab` | 41 | 6 | 6 |
 | `pjsip-lab` vs `kamailio-lab` | 41 | 5 | 7 |
+| `sofia-lab` vs `kamailio-lab` | 41 | 6 | 6 |
+| `builtin` vs `sofia-lab` (secondary) | 49 | 3 | 1 |
+| `builtin` vs `kamailio-lab` (secondary) | 41 | 6 | 6 |
 
 ## UA-library divergences
 
