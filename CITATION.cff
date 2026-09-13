@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite it using the metadata below.
+type: software
+title: "sipdrift: A Differential Testing Harness for Open-Source SIP Stacks"
+authors:
+  - family-names: Kazuru
+    given-names: Seke
+    orcid: "https://orcid.org/0009-0002-4099-1059"
+    email: kazuruuni@gmail.com
+    affiliation: Independent Researcher
+repository-code: "https://github.com/kazuru-chidumbwe/sipdrift"
+url: "https://github.com/kazuru-chidumbwe/sipdrift"
+abstract: >-
+  Differential testing harness for SIP message handling. A pinned fixture
+  corpus is run through multiple stack drivers; observations are normalized
+  onto shared oracle axes and classified as agree, diverge, error, or skip.
+  Stub drivers support CI without native SIP libraries; optional lab drivers
+  exercise PJSIP, Sofia-SIP, and Kamailio on a host-pinned lab path.
+keywords:
+  - SIP
+  - VoIP
+  - differential testing
+  - interoperability
+  - PJSIP
+  - Sofia-SIP
+  - Kamailio
+license: MIT
+version: "0.3.3"
+date-released: "2026-09-05"
+preferred-citation:
+  type: software
+  authors:
+    - family-names: Kazuru
+      given-names: Seke
+      orcid: "https://orcid.org/0009-0002-4099-1059"
+  title: "sipdrift: A Differential Testing Harness for Open-Source SIP Stacks"
+  version: "0.3.3"
+  url: "https://github.com/kazuru-chidumbwe/sipdrift"
+  year: 2026
+  month: 9

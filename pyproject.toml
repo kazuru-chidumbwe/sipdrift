@@ -5,14 +5,15 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sipdrift"
 version = "0.3.3"
-description = "Differential testing scaffold for open-source SIP/VoIP stacks (early development)."
+description = "Differential testing harness for open-source SIP/VoIP stacks (parse-oracle and lab drivers)."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "Kazuru" }]
-keywords = ["sip", "voip", "differential-testing", "joss"]
+authors = [{ name = "Seke Kazuru", email = "kazuruuni@gmail.com" }]
+keywords = ["sip", "voip", "differential-testing", "interoperability", "joss"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",

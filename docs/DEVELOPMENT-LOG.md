@@ -15,3 +15,4 @@ Sparse public history for the JOSS repo-age path. Product docs stay in the READM
 | 2026-09-05 | Body/SDP axes · 53 fixtures · pack `…015940Z` · voice + Results | `0.3.3` |
 | 2026-09-06 | Kamailio error triage docs · paper voice pass · section citation sync | docs only |
 | 2026-09-13 | Lab-vs-lab headline Results · builtin framed as calibration | paper voice |
+| 2026-09-13 | CONTRIBUTING · CHANGELOG · CITATION.cff · README/pyproject hygiene | JOSS OSS bar |
