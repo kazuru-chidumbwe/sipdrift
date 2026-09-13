@@ -14,7 +14,7 @@ authors:
 affiliations:
   - name: Independent Researcher
     index: 1
-date: 6 September 2026
+date: 13 September 2026
 bibliography: paper.bib
 ---
 
@@ -22,86 +22,15 @@ bibliography: paper.bib
 
 Session Initiation Protocol (SIP) stacks are the control-plane substrate for Voice over IP (VoIP), unified communications, and many telecom edge deployments [@rfc3261]. Open-source implementations — notably PJSIP [@pjsip], Sofia-SIP [@sofia], and Kamailio-class proxies [@kamailio] — are routinely combined in production platforms and research testbeds. Interoperability defects and semantic divergences between stacks are a recurring source of mis-routing, toll-fraud exposure, and security bypasses that single-stack conformance suites do not surface.
 
-**sipdrift** is an open-source differential testing harness for SIP message handling. It runs a pinned corpus of SIP fixtures through multiple stack drivers, normalizes each driver's observations onto shared oracle axes (start-line, status code, Via, CSeq, Content-Type, Content-Length, body and SDP digests), and classifies each fixture as `agree`, `diverge`, `error`, or `skip`. The harness ships a Python package with a `StackDriver` protocol, stub and lab drivers for PJSIP, Sofia-SIP, and Kamailio, a `compare`/`suite` CLI with text and JSON reports, GitHub Actions continuous integration, and a JOSS-oriented paper pack under `paper/`.
+**sipdrift** is an open-source differential testing harness for SIP message handling. It runs a pinned corpus of SIP fixtures through multiple stack drivers, normalizes each driver's observations onto shared oracle axes (start-line, status code, Via, CSeq, Content-Type, Content-Length, body and SDP digests), and classifies each fixture as `agree`, `diverge`, `error`, or `skip`. The package ships a `StackDriver` protocol, stub and lab drivers for PJSIP, Sofia-SIP, and Kamailio, a `compare`/`suite` CLI with text and JSON reports, continuous integration, and this JOSS paper pack under `paper/`.
 
 # Statement of need
 
-Production VoIP platforms assemble SIP proxies, media servers, session border controllers, and edge firewalls from different vendors and OSS projects. RFC 3261 conformance is necessary but not sufficient: stacks diverge on compact-form headers, folded header lines, whitespace tolerance, escaped URIs, unknown methods, incomplete messages, and how they treat message bodies and SDP [@rfc3261; @rfc4475]. Those divergences matter for operators who must reason about what a peer will accept or rewrite, and for researchers studying protocol robustness and defence-in-depth at the signalling layer.
+Production VoIP platforms assemble SIP proxies, media servers, session border controllers, and edge firewalls from different vendors and OSS projects. RFC 3261 conformance is necessary but not sufficient: stacks diverge on compact-form headers, folded lines, whitespace, escaped URIs, unknown methods, incomplete messages, and body/SDP handling [@rfc3261; @rfc4475]. Those divergences matter for operators comparing upgrades and for researchers studying signalling robustness.
 
-Existing SIP tooling clusters into four useful but incomplete categories:
+Existing SIP tooling clusters into four incomplete categories: load tools such as SIPp [@sipp]; live interop events such as SIPit [@sipit]; single-stack unit and conformance tests; and fuzzers that rarely emit structured cross-stack agreement classifications [@afl; @resolfuzz; @resolverfuzz].
 
-1. **Load / scenario tools** such as SIPp generate traffic against a single target [@sipp].
-2. **Interop events** such as SIPit expose live multi-vendor behaviour but are not a reproducible fixture corpus [@sipit].
-3. **Single-stack unit and conformance tests** validate one implementation in isolation.
-4. **Protocol fuzzers** find crashes and assertion failures but rarely emit a structured cross-stack agreement classification [@afl; @resolfuzz; @resolverfuzz].
-
-sipdrift fills the gap with a **repeatable differential oracle**: identical fixtures, multiple drivers, shared axes, and machine-readable outcomes. The design follows the same fixture-driven differential pattern used in related network-stack measurement work, specialised here to SIP message observation rather than live call completion or DNS path consistency.
-
-Who benefits:
-
-- **Operators** comparing candidate SIP stacks or upgrades under controlled inputs before cut-over.
-- **Security researchers** documenting parser and header-handling drift that can enable request-smuggling or auth-bypass hypotheses.
-- **OSS maintainers** adding regression fixtures when a divergence is fixed or accepted as intentional.
-
-# Methodology and architecture
-
-## Pipeline
-
-```text
-fixture (.sip) → StackDriver.observe() × N → classify_observations() → report
-```
-
-| Layer | Module | Role |
-| --- | --- | --- |
-| Fixtures | `fixtures/*.sip` | Pinned SIP inputs (CRLF wire; stable IDs) |
-| Parse | `sipdrift.parse` | Reference start-line and header extraction |
-| Drivers | `sipdrift.drivers` | `StackDriver` implementations per stack tier |
-| Harness | `sipdrift.harness` | Multi-axis classification oracle |
-| Run loop | `sipdrift.run` | Load → observe ×2 → classify → report |
-| CLI | `sipdrift.cli` | `status`, `fixtures`, `drivers`, `compare`, `suite` |
-| Lab tools | `tools/sofia_observe`, `tools/pjsip_observe` | Subprocess adapters for real OSS parsers |
-
-## Oracle axes
-
-From **0.3.3**, the default oracle compares:
-
-| Axis | Meaning |
-| --- | --- |
-| `start_line` | First non-empty request or status line |
-| `status_code` | Numeric response code when present |
-| `via` | First Via header value |
-| `cseq` | CSeq header value |
-| `content_type` | Content-Type / compact `c` |
-| `content_length` | Content-Length / compact `l` (integer) |
-| `body_sha256` | SHA-256 of the raw body bytes |
-| `sdp_sha256` | SHA-256 of normalized SDP when Content-Type is `application/sdp`; else null |
-
-Outcomes: `agree` · `diverge` · `error` · `skip`. Body axes fingerprint the delivered fixture body (and a stable SDP normalization); they do not yet compare stack re-serialization of media descriptions.
-
-## Driver tiers
-
-| Driver | Tier | Backend |
-| --- | --- | --- |
-| `builtin` | Reference | Pure-Python parse path (not an OSS SIP stack) |
-| `pjsip-stub` / `sofia-stub` | Stub | Same parse path; documents intended OSS targets |
-| `pjsip-lab` | Lab | `tools/pjsip_observe` (`pjsip_parse_msg`) |
-| `sofia-lab` | Lab | `tools/sofia_observe` (Sofia `msg_make`) |
-| `kamailio-stub` / `kamailio-lab` | Stub / Lab | Proxy-tier UDP observe (`tools/kamailio/`) |
-
-CI exercises stub and reference drivers so the package remains installable without native SIP libraries. Lab drivers are optional and host-pinned. Headline Results therefore lead with `pjsip-lab` / `sofia-lab` / `kamailio-lab` pairs. `builtin` and stub drivers appear in secondary tables as **calibration** and CI-installable fallbacks — they are not a fourth OSS stack in the interop claim.
-
-## Fixture corpus
-
-Version **0.3.3** ships **53** fixtures: happy-path requests/responses, dialog methods, event packages, INVITE/200 with SDP bodies, compact Content-Type, plain MESSAGE bodies, compact/folded/multi-Via, case and whitespace edges, incomplete messages, and an expanded RFC 4475–inspired torture set (LWS, escaped/long URIs, mismatched and duplicate Content-Length, duplicate Via/CSeq, non-ASCII Warning, NUL-in-body, IPv6 Via, display-names, unknown URI schemes, Request-URI parameters, empty Subject, missing magic cookie).
-
-## Threats to validity
-
-- Drivers observe **parse/normalization** of a fixture blob — not full transaction or media state machines.
-- Body/SDP digests are wire fingerprints (plus SDP whitespace normalization); stacks that rewrite SDP on the wire are out of scope until a re-serialize path exists.
-- Normalization differences are real under the chosen axes, but may be intentional stack policy.
-- Lab binaries are host-pinned; reproducers without Sofia/PJSIP/Kamailio fall back to stubs.
-- `kamailio-lab` is a **proxy receive** path (UDP + script dump), not a production routing configuration [@kamailio].
-- `builtin` and `*-stub` share the harness parse path; agreement among them is not evidence that OSS stacks agree.
+sipdrift supplies a **repeatable differential oracle**: identical fixtures, multiple drivers, shared axes, and machine-readable outcomes. Who benefits: operators under controlled cut-over inputs; security researchers documenting parser drift; OSS maintainers adding regression fixtures when a divergence is fixed or accepted as intentional.
 
 # State of the field
 
@@ -113,38 +42,48 @@ Version **0.3.3** ships **53** fixtures: happy-path requests/responses, dialog m
 | Differential DNS fuzzing [@resolfuzz; @resolverfuzz] | Semantic diverge discovery | DNS, not SIP message fixtures |
 | Project-local test suites | Deep coverage for one stack | Not cross-stack by construction |
 
-sipdrift asks: *do these stacks agree on these axes under this input?* Headline Results answer that from **lab-vs-lab** pairs. The `builtin` driver is a harness reference parser used to calibrate lab adapters, not a stack in the interop claim.
+sipdrift asks: *do these stacks agree on these axes under this input?* Headline answers come from **lab-vs-lab** pairs. The `builtin` driver is a harness reference parser for calibration, not a stack in the interop claim.
 
-# Results
+# Software design
 
-## Lab setup
+```text
+fixture (.sip) → StackDriver.observe() × N → classify_observations() → report
+```
 
-Ephemeral Ubuntu 24.04 lab host (16 vCPU). Sofia-SIP `1.12.11` and Kamailio `5.7.4` from distro packages; PJSIP built from upstream pjproject. Packs under a host-local `/opt/atlas/sipdrift-packs/` tree. Canonical Results pack: **`sipdrift-hostb-20260905T015940Z`** (`0.3.3`, 53 fixtures, seven drivers including `kamailio-lab`). Pack index SHA-256 (`EXPERIMENT-INDEX.json`):
+| Layer | Module | Role |
+| --- | --- | --- |
+| Fixtures | `fixtures/*.sip` | Pinned SIP inputs (CRLF wire; stable IDs) |
+| Drivers | `sipdrift.drivers` | `StackDriver` implementations per tier |
+| Harness | `sipdrift.harness` | Multi-axis classification oracle |
+| CLI | `sipdrift.cli` | `status`, `fixtures`, `drivers`, `compare`, `suite` |
+| Lab tools | `tools/*_observe`, `tools/kamailio/` | Subprocess / UDP adapters |
+
+Default oracle axes (from **0.3.3**): `start_line`, `status_code`, `via`, `cseq`, `content_type`, `content_length`, `body_sha256`, `sdp_sha256`. Outcomes: `agree` · `diverge` · `error` · `skip`. Body axes fingerprint wire bytes (plus SDP whitespace normalization); they do not yet compare stack re-serialization of media descriptions.
+
+| Driver | Tier | Backend |
+| --- | --- | --- |
+| `builtin` | Reference | Pure-Python parse path (not an OSS SIP stack) |
+| `*-stub` | Stub | Same parse path; documents OSS targets |
+| `pjsip-lab` / `sofia-lab` | Lab | Native observe helpers |
+| `kamailio-lab` | Lab | Proxy-tier UDP observe |
+
+CI exercises stub and reference drivers without native SIP libraries. Lab drivers are optional and host-pinned. Version **0.3.3** ships **53** fixtures spanning happy-path, compact/folded headers, SDP bodies, and an RFC 4475–inspired torture set.
+
+Threats to validity: observation covers parse/normalization of fixture blobs, not full transaction or media state machines; lab binaries are host-pinned; `kamailio-lab` is a proxy receive path, not a production routing configuration [@kamailio]; agreement among `builtin`/`*-stub` is not evidence that OSS stacks agree.
+
+# Research impact statement
+
+sipdrift is used in the author's own research workflow to measure cross-stack SIP parse/normalization agreement under a pinned corpus. The Host B laboratory pack **`sipdrift-hostb-20260905T015940Z`** (`0.3.3`) records suite outcomes and SHA-256 pins that this paper cites; those runs are developer research use of the software, not a separate measurement claim for JOSS. The intended research applications are (1) controlled comparison of candidate SIP stacks before cut-over and (2) documenting normalization drift that informs robustness and defence-in-depth hypotheses at the signalling layer. External adoption beyond the author is not claimed at submission time.
+
+# Example evaluation
+
+Ephemeral Ubuntu 24.04 lab host; Sofia-SIP `1.12.11` and Kamailio `5.7.4` from distro packages; PJSIP from upstream pjproject. Pack index SHA-256:
 
 ```
 7231d56540708c3406c2f0b3af4b53f9f61ce9d304ac1c01a1f9c219f7bd126a
 ```
 
-Pack checksum-list SHA-256 (sorted lines `sha256  filename` over the five deposited pack files):
-
-```
-9dcb47784c11db42b4e83778fe9244b6445cd200a1b479bbbd93952edc66a3e3
-```
-
-## Experiment classes
-
-1. Full-corpus **driver-pair suites** (all ordered pairs among seven drivers — **105** indexed experiments in the 0.3.3 pack).
-2. Per-fixture spotlights (lab-vs-lab pairs, plus `builtin` calibration vs `sofia-lab`).
-3. Sofia CLI tool smokes.
-4. **Live OPTIONS** (UDP responder + `sip-options`).
-5. **pytest** on the lab virtualenv.
-6. **Kamailio observe listener** (`tools/kamailio/`) — UDP fixture delivery → Lua JSON axes.
-
-## Headline suite outcomes (0.3.3 pack, 53 fixtures)
-
-The headline claim is **lab versus lab**: real OSS stacks compared to each other. `builtin` is a pure-Python reference parse path, not a SIP stack; comparisons against it are **calibration** (does the lab adapter match the harness parser?) and are tabulated second.
-
-### Lab versus lab (headline)
+Headline **lab versus lab** suite outcomes (53 fixtures):
 
 | Pair | agree | diverge | error |
 | --- | ---: | ---: | ---: |
@@ -152,34 +91,9 @@ The headline claim is **lab versus lab**: real OSS stacks compared to each other
 | `pjsip-lab` vs `kamailio-lab` | 41 | 5 | 7 |
 | `sofia-lab` vs `kamailio-lab` | 41 | 6 | 6 |
 
-### Reference and stub (secondary)
+Secondary `builtin` / stub rows are calibration only (see `docs/DIVERGENCES.md`). Against `kamailio-lab`, six fixtures error because the UDP receive script never writes an observation (`F-MALFORMED-START`, `F-SPACES-START`, `F-NO-HEADERS`, `F-ONLY-START`, `F-MISSING-VIA`, `F-MISSING-CSEQ`) — expected for a proxy path that drops incomplete messages before the Lua dump. Notable lab-vs-lab divergences include method/version case (`F-LOWER-SIP`), folded Via whitespace (`F-FOLDED-VIA`), and unknown Request-URI schemes. All reported divergences are normalization-class findings — not CVE claims. A live OPTIONS UDP round-trip on the same host exits **0** outside the fixture replay path.
 
-| Pair | agree | diverge | error |
-| --- | ---: | ---: | ---: |
-| Stub pairs | 52 | 0 | 1 |
-| `builtin` vs `sofia-lab` | 49 | 3 | 1 |
-| `builtin` vs `kamailio-lab` | 41 | 6 | 6 |
-
-Against `kamailio-lab`, six fixtures error because the UDP receive script never writes an observation file: `F-MALFORMED-START`, `F-SPACES-START`, `F-NO-HEADERS`, `F-ONLY-START`, `F-MISSING-VIA`, and `F-MISSING-CSEQ`. That pattern is expected for a proxy receive path that drops malformed or header-incomplete messages before the Lua dump runs. Additional torture cases (`F-TORTURE-MULTI-CLEN`, `F-TORTURE-UNKNOWN-SCHEME`, trailing Via whitespace) add **diverge** rows rather than errors. SDP body fixtures agree across stub and UA lab pairs under the wire-body axes. All reported divergences are normalization-class findings — not CVE claims.
-
-## Notable divergences
-
-| Fixture | Pair | Axis behaviour |
-| --- | --- | --- |
-| `F-LOWER-SIP` | `pjsip-lab` vs `sofia-lab`; also vs `kamailio-lab` | Method / SIP-version case policy differs |
-| `F-FOLDED-VIA` | `sofia-lab` vs `kamailio-lab` | Fold unfold / retained continuation whitespace |
-| `F-TORTURE-UNKNOWN-SCHEME` | `sofia-lab` vs `kamailio-lab` (`pjsip-lab` errors) | Unknown Request-URI scheme → empty R-URI |
-| `F-TORTURE-WS-END` · `F-TORTURE-DUP-VIA` · `F-TORTURE-MULTI-CLEN` | UA labs vs `kamailio-lab` | Via extraction / receive-path oddities |
-| `F-SPACES-START` | `builtin` vs `sofia-lab` (calibration); `kamailio-lab` **errors** | Sofia collapses status whitespace; proxy receive drops |
-
-## Live OPTIONS
-
-A minimal UDP responder on `0.0.0.0:15060` answers OPTIONS probes from `sip-options`. Three invocation modes — default, `--all`, and `--1XX` — all exit **0**, confirming the lab host can complete a live signalling round-trip outside the fixture replay path.
-
-
-# Reproducibility and smoke gate
-
-## Install (stub / CI path)
+# Reproducibility
 
 ```bash
 git clone https://github.com/kazuru-chidumbwe/sipdrift.git
@@ -190,36 +104,7 @@ python -m sipdrift.cli compare F-200-MIN
 python -m sipdrift.cli suite --right sofia-stub
 ```
 
-Expected: `compare` exit **0** (`agree`); `suite` exit **1** when the malformed fixture errors (remaining stub-pair cases agree).
-
-See also `examples/README.md`.
-
-## Lab path (optional)
-
-```bash
-make -C tools sofia
-export SIPDRIFT_SOFIA_OBSERVE=$PWD/tools/sofia_observe
-make -C tools pjsip PJDIR=/path/to/pjproject
-export SIPDRIFT_PJSIP_OBSERVE=$PWD/tools/pjsip_observe
-python -m sipdrift.cli suite --left pjsip-lab --right sofia-lab
-
-bash tools/kamailio/start_observe.sh
-export SIPDRIFT_KAMAILIO_PORT=5090
-python -m sipdrift.cli suite --left sofia-lab --right kamailio-lab
-python -m sipdrift.cli suite --left pjsip-lab --right kamailio-lab
-
-# Secondary: harness reference vs a lab driver
-python -m sipdrift.cli suite --left builtin --right sofia-lab
-python tools/run_hostb_experiments.py
-```
-
-## Continuous integration
-
-GitHub Actions (`.github/workflows/ci.yml`) runs `pytest` on pushes and pull requests to `main`.
-
-## Lab pack pin
-
-Byte-verify headline Results against Host B pack **`sipdrift-hostb-20260905T015940Z`**:
+Lab path (optional): build observe helpers, then `suite --left pjsip-lab --right sofia-lab` and Kamailio lab pairs as in `examples/README.md`. GitHub Actions runs `pytest` on `main`. Canonical pack **`sipdrift-hostb-20260905T015940Z`**:
 
 | Object | SHA-256 |
 | --- | --- |
@@ -227,17 +112,15 @@ Byte-verify headline Results against Host B pack **`sipdrift-hostb-20260905T0159
 | Pack checksum-list (5 files) | `9dcb47784c11db42b4e83778fe9244b6445cd200a1b479bbbd93952edc66a3e3` |
 | `E-suite-pjsip-lab-vs-sofia-lab.json` | `04a057e9ff7b315c293b30add63dbdc8891b62bad1252cbb87863a809a017cf8` |
 | `E-suite-sofia-lab-vs-kamailio-lab.json` | `854a74ee52a3667428be662199c3018de8b1e282ab8fe44e225d3bf167efec0e` |
-| `E-suite-builtin-vs-sofia-lab.json` | `e4b04929e8363a4598c747488c85835894d83bf5f8a2325fce580599e9f46559` |
-| `E-suite-builtin-vs-kamailio-lab.json` | `793331482faa0758092566918131430056963d26ed617be43df45b9b50ea70d6` |
 
-Reproduce locally with `tools/run_hostb_experiments.py` on a lab host that has Sofia/PJSIP/Kamailio observe binaries; compare suite JSON digests to the table above.
+Reproduce with `tools/run_hostb_experiments.py` on a lab host that has Sofia/PJSIP/Kamailio observe binaries.
 
 # Acknowledgements
 
 Thanks to maintainers of PJSIP, Sofia-SIP, and Kamailio for open SIP software that makes lab drivers possible, and to operators who share edge-case traces that inform fixture design.
 
-## AI usage disclosure
+# AI usage disclosure
 
-Drafting and refactoring of harness code and this manuscript were assisted by AI coding tools under author direction. All experimental claims, fixture contents, oracle definitions, and final wording were reviewed and accepted by the author. No AI system is listed as an author or contributor.
+Generative AI coding assistants were used under author direction for drafting and refactoring harness code, documentation, and this manuscript. The author made the architectural and oracle design decisions, authored and curated the fixture corpus, ran and pinned laboratory experiments, and reviewed, edited, and validated all AI-assisted outputs before publication. No AI system is listed as an author or contributor.
 
 # References
