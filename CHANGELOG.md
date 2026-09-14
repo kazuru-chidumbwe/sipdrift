@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- JOSS paper Results lead with lab-vs-lab pairs; `builtin` framed as calibration.
-- Public README, CONTRIBUTING, CITATION.cff, and package metadata aligned for JOSS single-author hygiene.
+- Headline docs lead with lab-vs-lab pairs; `builtin` framed as calibration.
+- Removed venue-oriented draft pack from the public tree; product docs only.
 
 ## [0.3.3] — 2026-09-05
 
@@ -18,11 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Body and SDP oracle axes (`body_sha256`, `sdp_sha256`, Content-Type / Content-Length).
 - Expanded RFC 4475–class torture corpus — **53** fixtures total.
-- Canonical Host B pack `sipdrift-hostb-20260905T015940Z` digests in `paper/`.
+- Canonical Host B pack `sipdrift-hostb-20260905T015940Z` digests recorded in divergences docs.
 
 ### Changed
 
-- JOSS draft Results and divergences docs for the 0.3.3 pack.
+- Divergences and Results framing for the 0.3.3 pack.
 
 ## [0.3.2] — 2026-09-05
 
@@ -45,7 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `pjsip-lab` and `sofia-lab` observe helpers.
 - 32-fixture corpus and Host B experiment pack.
-- Initial JOSS draft under `paper/`.
 
 ## [0.2.0] — 2026-08-30
 

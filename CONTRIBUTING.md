@@ -26,16 +26,15 @@ Stub drivers (`builtin`, `*-stub`) run without native SIP libraries. Lab drivers
 | Oracle / classification | `sipdrift/harness.py` + tests under `tests/` |
 | Stub driver | `sipdrift/drivers/` + registry entry |
 | Lab observe helper | `tools/` + docs update |
-| Paper / JOSS pack | `paper/` |
 
 ## Commit style
 
 - Prefer short imperative subjects (`Add …`, `Fix …`, `docs: …`).
-- Do not add AI tooling or IDE products as co-authors or contributors in commits, README, CITATION, or the paper.
+- Do not add AI tooling or IDE products as co-authors or contributors in commits, README, or CITATION.
 - Keep experimental claims tied to pinned packs or reproducible CLI commands.
 
 ## Scope boundaries
 
 - Headline interop claims are **lab-vs-lab** (real OSS stacks). `builtin` is a reference parse path for calibration and CI — not a fourth SIP stack.
-- Divergences are normalization-class findings under the oracle axes, not CVE claims.
-- Do not invent Host B Results; re-run `tools/run_hostb_experiments.py` on a lab host and compare digests to `paper/paper.md`.
+- Divergences are normalization-class findings under the oracle axes, not vulnerability claims.
+- Do not invent Host B Results; re-run `tools/run_hostb_experiments.py` on a lab host and compare digests to [`docs/DIVERGENCES.md`](docs/DIVERGENCES.md) and deposited pack indexes.

@@ -6,7 +6,7 @@ from pathlib import Path
 
 FIXTURES_DIR = Path(__file__).resolve().parents[1] / "fixtures"
 
-# Stable IDs for JOSS-era manifests later.
+# Stable fixture IDs for deposited suite manifests.
 FIXTURE_INDEX: dict[str, str] = {
     "F-INVITE-MIN": "invite_min.sip",
     "F-200-MIN": "response_200_min.sip",

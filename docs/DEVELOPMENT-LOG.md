@@ -1,6 +1,6 @@
 # sipdrift — development log
 
-Sparse public history for the JOSS repo-age path. Product docs stay in the README; this file only records when scaffold milestones landed.
+Sparse public history of harness milestones. Product docs stay in the README.
 
 | Date | Intent | Note |
 | --- | --- | --- |
@@ -9,11 +9,11 @@ Sparse public history for the JOSS repo-age path. Product docs stay in the READM
 | 2026-08-08 | Fixture corpus stub · compare-harness outline · `fixtures` CLI | `0.0.2` |
 | 2026-08-30 | StackDriver protocol · PJSIP stub · compare CLI · expanded fixtures · CI | `0.1.0` |
 | 2026-08-30 | Multi-axis oracle · Sofia-SIP stub · suite command · divergences doc | `0.2.0` |
-| 2026-09-05 | Lab drivers (`pjsip-lab`, `sofia-lab`) · 32 fixtures · Host B experiment pack · JOSS draft | `0.3.0` |
-| 2026-09-05 | Torture fixtures (40) · live OPTIONS fix · Results tables · examples · Kamailio scope | `0.3.1` |
-| 2026-09-05 | Kamailio lab driver (UDP+Lua) · 7 drivers · Results delta · pack `…012956Z` | `0.3.2` |
-| 2026-09-05 | Body/SDP axes · 53 fixtures · pack `…015940Z` · voice + Results | `0.3.3` |
-| 2026-09-06 | Kamailio error triage docs · paper voice pass · section citation sync | docs only |
-| 2026-09-13 | Lab-vs-lab headline Results · builtin framed as calibration | paper voice |
-| 2026-09-13 | CONTRIBUTING · CHANGELOG · CITATION.cff · README/pyproject hygiene | JOSS OSS bar |
-| 2026-09-13 | JOSS 2026 headings · research impact · top-level AI · word-count trim | paper voice |
+| 2026-09-05 | Lab drivers (`pjsip-lab`, `sofia-lab`) · 32 fixtures · Host B experiment pack | `0.3.0` |
+| 2026-09-05 | Torture fixtures (40) · live OPTIONS fix · examples · Kamailio scope | `0.3.1` |
+| 2026-09-05 | Kamailio lab driver (UDP+Lua) · 7 drivers · pack `…012956Z` | `0.3.2` |
+| 2026-09-05 | Body/SDP axes · 53 fixtures · pack `…015940Z` | `0.3.3` |
+| 2026-09-06 | Kamailio error triage docs · divergences sync | docs only |
+| 2026-09-13 | Lab-vs-lab headline framing · builtin as calibration | docs |
+| 2026-09-13 | CONTRIBUTING · CHANGELOG · CITATION.cff · README hygiene | docs |
+| 2026-09-14 | Remove venue draft pack pointers from public docs | docs |

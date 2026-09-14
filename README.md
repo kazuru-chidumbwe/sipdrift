@@ -6,7 +6,7 @@ Pinned SIP fixtures are observed through multiple drivers, normalized onto share
 
 ## Status
 
-**`0.3.3`** — 53 fixtures · seven drivers · Host B pack pins · JOSS draft under [`paper/`](paper/).
+**`0.3.3`** — 53 fixtures · seven drivers · Host B pack pins.
 
 Headline comparisons are **lab versus lab** (real OSS stacks). `builtin` and `*-stub` drivers are for CI and calibration — not a fourth SIP stack.
 
@@ -44,6 +44,8 @@ sipdrift suite --left pjsip-lab --right kamailio-lab
 ```
 
 Known divergences: [`docs/DIVERGENCES.md`](docs/DIVERGENCES.md) · Kamailio scope: [`docs/KAMAILIO-SCOPE.md`](docs/KAMAILIO-SCOPE.md).
+
+Reproduce Host B-style suites with `tools/run_hostb_experiments.py` on a lab host that has observe binaries installed.
 
 ## Cite
 

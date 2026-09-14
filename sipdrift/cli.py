@@ -66,11 +66,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.command is None:
-        print(f"sipdrift {__version__}: compare harness (early development).")
+        print(f"sipdrift {__version__}: compare harness ready.")
         return 0
 
     if args.command == "status":
-        print(f"sipdrift {__version__}: compare harness (early development).")
+        print(f"sipdrift {__version__}: compare harness ready.")
         return 0
 
     if args.command == "fixtures":
